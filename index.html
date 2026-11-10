@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DREI VERSUCHE · 三次机会 — 德国留学之路</title>
+<style>
+:root{
+  --ink:#1D2B23;
+  --panel:#2A3B33;
+  --panel-2:#22302A;
+  --line:#101815;
+  --cream:#F4EFD9;
+  --cream-2:#E4DCBE;
+  --teal:#4E9A92;
+  --teal-2:#79C4BC;
+  --red:#C0503E;
+  --gold:#E8B84B;
+  --mono:"Courier New",Consolas,"SF Mono",monospace;
+  --sans:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh;background:#17211B;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+  color:var(--cream);font-family:var(--sans);
+  display:flex;justify-content:center;
+  padding:26px 14px 60px;
+}
+#app{width:100%;max-width:940px}
+
+/* ================= HUD ================= */
+#hud{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;
+  font-family:var(--mono);
+}
+.chip{
+  background:var(--panel-2);border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.09), inset -2px -2px 0 rgba(0,0,0,.28);
+  padding:5px 10px 4px;display:flex;align-items:center;gap:7px;
+  font-size:12px;letter-spacing:.06em;color:var(--cream-2);
+}
+.chip svg{width:14px;height:14px;display:block}
+.chip b{color:var(--cream);font-weight:700}
+.chip.hot b{color:var(--gold)}
+.attdots{letter-spacing:2px;color:var(--red);font-size:13px}
+
+/* ================= 舞台 ================= */
+#stage{
+  position:relative;aspect-ratio:16/9;width:100%;
+  border:4px solid var(--line);
+  box-shadow:0 0 0 3px #3A5045, 0 18px 40px -18px rgba(0,0,0,.8);
+  overflow:hidden;background:#CDE8D8;cursor:pointer;
+}
+#bg{position:absolute;inset:0}
+#bg svg{width:100%;height:100%;display:block}
+#fx{position:absolute;inset:0;pointer-events:none}
+#fx.night{background:rgba(18,28,44,.34)}
+#fx.rain{
+  background-image:repeating-linear-gradient(76deg, transparent 0 13px, rgba(214,232,240,.30) 13px 14px, transparent 14px 27px);
+  background-size:27px 27px;animation:rainmove .48s linear infinite;
+}
+@keyframes rainmove{to{background-position:-27px 27px}}
+#fx.flash::before{content:"";position:absolute;inset:0;background:transparent;animation:lightning 7s infinite}
+@keyframes lightning{0%,93%,100%{background:transparent}94%{background:rgba(240,248,255,.22)}95%{background:transparent}96%{background:rgba(240,248,255,.15)}}
+
+/* 章节标签 */
+#chlabel{
+  position:absolute;top:10px;left:10px;z-index:6;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  background:var(--line);color:var(--gold);padding:4px 9px 3px;
+  box-shadow:2px 2px 0 rgba(0,0,0,.35);
+}
+
+/* 转场 */
+#transit{
+  position:absolute;inset:0;z-index:9;display:none;
+  background:linear-gradient(#1A2620,#24352C 55%,#2C4237);
+  align-items:center;justify-content:center;flex-direction:column;gap:14px;
+}
+#transit.on{display:flex}
+#transit .roadstripes{
+  position:absolute;left:0;right:0;bottom:0;height:56%;
+  background:linear-gradient(transparent, rgba(140,144,138,.16) 40%, #84888280 100%);
+}
+#transit .roadstripes::before{
+  content:"";position:absolute;left:46%;right:46%;top:0;bottom:0;
+  background:repeating-linear-gradient(180deg, var(--cream-2) 0 18px, transparent 18px 34px);
+  animation:stripes 0.42s linear infinite;opacity:.85;
+}
+@keyframes stripes{to{background-position:0 34px}}
+#transit .tlabel{
+  position:relative;font-family:var(--mono);font-size:15px;letter-spacing:.22em;
+  color:var(--cream);background:var(--line);padding:8px 18px 7px;
+  box-shadow:4px 4px 0 rgba(0,0,0,.4);
+  animation:tIn .5s cubic-bezier(.2,.9,.3,1.4) both;
+}
+#transit .tsub{position:relative;font-size:11px;color:var(--teal-2);letter-spacing:.3em;background:rgba(26,38,32,.88);padding:3px 10px 2px}
+@keyframes tIn{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}
+
+/* 收卡提示 */
+#toast{
+  position:absolute;top:12px;right:12px;z-index:8;max-width:70%;
+  background:var(--line);border:2px solid var(--gold);
+  color:var(--cream);padding:8px 12px 7px;font-size:12px;line-height:1.6;
+  box-shadow:3px 3px 0 rgba(0,0,0,.4);
+  display:none;animation:tIn .4s both;
+}
+#toast b{color:var(--gold)}
+#toast.on{display:block}
+#toast .tt{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--teal-2);display:block;margin-bottom:2px}
+
+/* ================= 对话区 ================= */
+#dlg{
+  margin-top:12px;background:var(--panel);border:4px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.07), inset -2px -2px 0 rgba(0,0,0,.3), 0 0 0 3px #3A5045;
+  min-height:132px;display:flex;gap:12px;padding:12px;position:relative;
+}
+#portbox{
+  flex:0 0 78px;width:78px;height:78px;align-self:flex-start;
+  background:var(--panel-2);border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+#portbox svg{width:68px;height:68px;display:block}
+#dsay{flex:1;min-width:0;display:flex;flex-direction:column}
+#who{
+  display:none;align-self:flex-start;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  color:var(--line);background:var(--teal-2);
+  padding:3px 9px 2px;margin-bottom:8px;
+}
+#who.on{display:inline-block}
+#who.mail{background:var(--gold)}
+#who.book{background:var(--cream-2)}
+#who.red{background:var(--red);color:var(--cream)}
+#text{
+  font-size:15px;line-height:1.9;color:var(--cream);
+  min-height:56px;letter-spacing:.01em;overflow-wrap:break-word;
+}
+#text .de{font-family:var(--mono);font-size:.92em;color:var(--teal-2)}
+#text em{font-style:normal;color:var(--gold)}
+#text b{font-weight:700;color:#FFF}
+#cont{
+  position:absolute;right:14px;bottom:8px;font-family:var(--mono);
+  color:var(--teal-2);font-size:12px;display:none;animation:bob 1s infinite;
+}
+#cont.on{display:block}
+@keyframes bob{50%{transform:translateY(3px)}}
+
+/* 选项 */
+#choices{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.pxopt{
+  text-align:left;cursor:pointer;font-family:var(--sans);
+  background:var(--cream);color:var(--ink);
+  border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 #FFF, inset -2px -2px 0 rgba(0,0,0,.14), 2px 2px 0 rgba(0,0,0,.35);
+  padding:9px 12px 8px;transition:transform .12s, background .12s;
+}
+.pxopt:hover:not(:disabled){transform:translate(-1px,-1px);background:#FFFDEE}
+.pxopt:active:not(:disabled){transform:translate(1px,1px)}
+.pxopt:disabled{opacity:.45;cursor:default}
+.pxopt .ol{display:block;font-size:14.5px;font-weight:700;line-height:1.5}
+.pxopt .os{display:block;font-family:var(--mono);font-size:10.5px;color:#5B6B5E;margin-top:3px;letter-spacing:.02em}
+.pxopt.primary{background:var(--teal)}
+.pxopt.primary .ol{color:#FFF}
+.pxopt.primary .os{color:#D2ECE8}
+.pxopt.primary:hover:not(:disabled){background:var(--teal-2)}
+.pxopt.picked{background:var(--gold)}
+.pxopt.picked .ol{color:var(--ink)}
+
+/* ================= 面板（舞台上弹窗） ================= */
+#panelwrap{
+  position:absolute;inset:0;z-index:7;display:none;
+  background:rgba(16,24,20,.62);padding:4%;
+  align-items:center;justify-content:center;
+}
+#panelwrap.on{display:flex}
+#panel{
+  width:100%;max-height:100%;overflow:auto;
+  background:var(--panel-2);border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.08), 0 14px 30px rgba(0,0,0,.5);
+  padding:16px 18px 14px;color:var(--cream);
+  animation:tIn .35s both;
+}
+#panel::-webkit-scrollbar{width:10px}
+#panel::-webkit-scrollbar-thumb{background:var(--teal);border:2px solid var(--line)}
+
+/* 文档流面板 */
+#flowbox{
+  margin-top:12px;background:var(--panel-2);border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.08), 0 0 0 3px #3A5045;
+  padding:18px 20px 16px;color:var(--cream);
+}
+#flowbox h3{
+  font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--teal-2);
+  border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px;font-weight:400;
+}
+#flowbox h3 span{color:var(--gold)}
+#flowbox p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+#flowbox b{color:var(--gold)}
+#flowbox em{font-style:normal;color:var(--teal-2)}
+#flowbox .src{display:block;font-family:var(--mono);font-size:9.5px;color:#7E938A;letter-spacing:.04em;margin-top:6px}
+#panel h3{
+  font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--teal-2);
+  border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px;font-weight:400;
+}
+#panel h3 span{color:var(--gold)}
+#panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+#panel b{color:var(--gold)}
+#panel em{font-style:normal;color:var(--teal-2)}
+#panel .src{display:block;font-family:var(--mono);font-size:9.5px;color:#7E938A;letter-spacing:.04em;margin-top:6px}
+
+/* 深色系统屏（DSH / 论文封面） */
+.sysrow{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:11.5px;line-height:2;color:#AFC5BC;border-bottom:1px dashed rgba(232,237,233,.1)}
+.sysrow b{color:#EFF4EF;font-weight:400;flex-shrink:0}
+.sysrow em{color:#FFC99B;font-style:normal}
+.syswarn{margin-top:11px;font-size:11px;line-height:1.8;color:#E9BA8D}
+.sysbig{font-family:var(--mono);font-size:15px;color:#F4F7F4;margin:2px 0 10px;letter-spacing:.04em}
+
+/* 条款卡 */
+#clgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px}
+.clause{
+  background:var(--cream);color:var(--ink);border:3px solid var(--line);
+  box-shadow:2px 2px 0 rgba(0,0,0,.35);padding:9px 11px 8px;
+  cursor:pointer;position:relative;transition:transform .12s;
+}
+.clause:hover{transform:translate(-1px,-1px)}
+.clause .de{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:#2E3A32}
+.clause .cn{font-size:10.5px;line-height:1.6;color:#5B6B5E;margin-top:5px;border-top:1px dashed #C9C2A4;padding-top:5px}
+.clause.marked{background:#FBE9A8}
+.clause.marked::after{
+  content:"✓";position:absolute;right:7px;top:4px;color:var(--red);font-family:var(--mono);font-weight:700;font-size:13px;
+}
+.clause.wrongpick{background:#E8B4A8}
+.clause .tip{display:none;margin-top:7px;padding:6px 9px;background:rgba(192,80,62,.12);border-left:3px solid var(--red);font-size:10.5px;line-height:1.6;color:#7A4036}
+.clause.wrongpick .tip{display:block}
+
+/* 求租 */
+.pinglog{
+  height:96px;overflow:hidden;font-family:var(--mono);font-size:10.5px;line-height:1.85;
+  color:#8FA6A0;border-left:2px solid var(--line);padding-left:11px;margin-bottom:10px;
+}
+.pinglog div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinglog div:last-child{color:var(--cream)}
+.pinglog .hit{color:var(--red);font-weight:700}
+
+/* 论文登记表 */
+.formfield{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--cream);color:var(--ink);border:3px solid var(--line);
+  box-shadow:2px 2px 0 rgba(0,0,0,.3);padding:9px 12px 8px;margin-bottom:8px;cursor:pointer;
+}
+.formfield .fk{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:#5B6B5E;flex:0 0 118px;padding-top:2px;text-transform:uppercase}
+.formfield .fv{font-family:var(--mono);font-size:12px;line-height:1.6;color:#26301F;flex:1;min-width:0;overflow-wrap:anywhere}
+.formfield.wrongpick{background:#E8B4A8}
+.formfield.rightpick{background:#B9D8A8}
+
+/* 量表 */
+.gaugebar{height:14px;background:#141D18;border:2px solid var(--line);position:relative;overflow:hidden;margin:6px 0 8px}
+.gaugebar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-2));transition:width .9s ease}
+.gaugebar .th{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--red)}
+.gaugebar .th2{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--gold)}
+.gaugenote{font-size:10.5px;color:#8FA6A0;line-height:1.7}
+
+/* 印章 */
+.pstamp{
+  display:inline-block;margin:2px 0 12px;
+  border:4px double var(--red);color:var(--red);
+  font-family:var(--mono);font-size:13px;letter-spacing:.14em;font-weight:700;
+  padding:5px 12px 4px;transform:rotate(-6deg);
+  animation:stampIn .5s .25s cubic-bezier(.2,.9,.3,1.25) both;
+}
+@keyframes stampIn{from{opacity:0;transform:rotate(-6deg) scale(1.6)}60%{opacity:1;transform:rotate(-6deg) scale(.96)}to{opacity:1;transform:rotate(-6deg) scale(1)}}
+
+/* 台账 */
+.ledger{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin:8px 0 12px}
+.ledger td{padding:6px 0;border-bottom:1px dashed rgba(232,237,233,.15);color:#AFC5BC}
+.ledger td:last-child{text-align:right;color:var(--cream);font-weight:700}
+
+/* 知识卡收集 */
+.cardlist{display:flex;flex-direction:column;gap:7px;margin:10px 0 4px}
+.kcard{
+  background:var(--cream);color:var(--ink);border:3px solid var(--line);
+  box-shadow:2px 2px 0 rgba(0,0,0,.3);padding:9px 12px 8px;
+}
+.kcard .kn{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--teal);display:block;margin-bottom:3px}
+.kcard .kt{font-size:13.5px;font-weight:700;display:block;margin-bottom:4px}
+.kcard .kx{font-size:11.5px;line-height:1.7;color:#4A5A4E;display:block}
+.kcard.miss{background:transparent;color:#5E7268;border-color:#3A4A42;box-shadow:none}
+.kcard.miss .kt{color:#5E7268}
+
+/* 结算五条 */
+.findings li{font-size:12.5px;line-height:1.8;margin:0 0 9px 16px;color:#C8D6C8}
+.findings li::marker{color:var(--gold)}
+.findings b{color:var(--gold)}
+.findings .hi{color:var(--red);font-weight:700}
+
+details{border-top:2px solid var(--line);padding-top:10px;margin-top:12px}
+summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--teal-2);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"＋ "}
+
+.pxbtn{
+  display:inline-block;cursor:pointer;font-family:var(--mono);
+  background:var(--teal);color:#FFF;border:3px solid var(--line);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.35), inset -2px -2px 0 rgba(0,0,0,.25), 2px 2px 0 rgba(0,0,0,.4);
+  padding:8px 16px 7px;font-size:12px;letter-spacing:.1em;margin-top:6px;
+}
+.pxbtn:hover{background:var(--teal-2)}
+.pxbtn.gold{background:var(--gold);color:var(--ink)}
+.pxbtn.gold:hover{background:#F2CE6E}
+
+/* ================= 开始画面 ================= */
+#start{
+  position:absolute;inset:0;z-index:10;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:0;
+}
+#start.on{display:flex}
+#start .kick{
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--red);
+  background:var(--cream);padding:3px 10px 2px;border:2px solid var(--line);
+  margin-bottom:18px;
+}
+#start .bigt{
+  font-family:var(--mono);font-size:46px;font-weight:700;letter-spacing:.12em;line-height:1;
+  color:var(--line);text-shadow:3px 3px 0 rgba(255,255,255,.65), 6px 6px 0 rgba(90,110,95,.35);
+}
+#start .subt{
+  font-size:21px;letter-spacing:.5em;color:#33503F;margin:10px 0 4px;font-weight:700;
+}
+#start .subt2{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;color:#4A6252;margin-bottom:26px;font-weight:700}
+#start .desc{
+  max-width:430px;background:rgba(244,239,217,.9);border:3px solid var(--line);
+  box-shadow:3px 3px 0 rgba(0,0,0,.25);padding:10px 14px 9px;
+  font-size:12.5px;line-height:1.8;color:#2E3A32;text-align:center;margin-bottom:22px;
+}
+#start .desc b{color:var(--red)}
+#startbtn{
+  cursor:pointer;font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.28em;
+  color:#FFF;background:var(--teal);border:4px solid var(--line);
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.4), inset -3px -3px 0 rgba(0,0,0,.3), 4px 4px 0 rgba(0,0,0,.45);
+  padding:13px 44px 11px;transition:transform .12s, background .12s;
+}
+#startbtn:hover{transform:translate(-2px,-2px);background:var(--teal-2)}
+#startbtn:active{transform:translate(1px,1px)}
+#start .hint{margin-top:16px;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:#52685A}
+
+/* 两段式确认（可撤销） */
+.pxopt.armed{
+  background:var(--gold);outline:3px solid var(--red);outline-offset:-1px;
+}
+.pxopt.armed .ol{color:var(--ink)}
+.pxopt.armed .os{color:#5B4A1E}
+#armhint{
+  display:none;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--gold);
+  background:rgba(232,184,75,.08);border:2px dashed var(--gold);
+  padding:6px 10px 5px;
+}
+#armhint.on{display:flex}
+#armhint button{
+  cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  background:var(--red);color:#FFF;border:2px solid var(--line);padding:3px 8px 2px;
+}
+
+/* 房间交互热点 */
+#hots{position:absolute;inset:0;z-index:5;display:none}
+.hs{position:absolute;border:2px dashed transparent;cursor:pointer;transition:background .15s,border-color .15s}
+.hs:hover{border-color:var(--gold);background:rgba(232,184,75,.14)}
+.hs.hintpulse{animation:hpulse 1.6s infinite}
+@keyframes hpulse{0%,100%{border-color:transparent}50%{border-color:rgba(232,184,75,.8)}}
+.hs .hst{
+  position:absolute;left:0;top:-20px;white-space:nowrap;
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  background:var(--line);color:var(--gold);padding:2px 6px 1px;
+  opacity:0;transition:opacity .15s;pointer-events:none;
+}
+.hs:hover .hst,.hs.used .hst{opacity:1}
+.hs.used{border-color:rgba(79,154,146,.55);background:rgba(79,154,146,.08)}
+.hs.used .hst{color:#7E938A}
+#youover{position:absolute;z-index:4;display:none;pointer-events:none}
+#youover svg{width:38px;height:auto}
+#zzz{position:absolute;z-index:4;display:none;font-family:var(--mono);font-size:11px;color:var(--cream);animation:zz 2.2s infinite}
+@keyframes zz{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+
+/* 转场主角（走路） */
+#walker{position:absolute;bottom:23%;left:50%;transform:translateX(-50%);display:none;z-index:2}
+#walker svg{width:44px;height:auto;animation:walkbob .4s infinite alternate}
+@keyframes walkbob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-4px) rotate(2deg)}}
+
+/* 危险状态 HUD */
+.chip.danger{border-color:var(--red)}
+.chip.danger b{color:var(--red)}
+
+/* 心电图 */
+.ecgline{stroke-dasharray:150 50;animation:ecgrun 1.8s linear infinite}
+@keyframes ecgrun{to{stroke-dashoffset:-200}}
+
+/* 思维导图 */
+#mapwrap{overflow-x:auto;background:#1B2620;border:3px solid var(--line);padding:10px 8px;margin-top:12px}
+#mapwrap svg{display:block;min-width:700px;width:100%;height:auto}
+
+/* 响应式 */
+@media(max-width:640px){
+  body{padding:14px 8px 40px}
+  #dlg{flex-direction:column;gap:9px;padding:10px}
+  #portbox{flex:0 0 60px;width:60px;height:60px}
+  #portbox svg{width:52px;height:52px}
+  #text{font-size:13.5px;min-height:44px}
+  #start .bigt{font-size:32px}
+  #start .subt{font-size:16px;letter-spacing:.34em}
+  .chip{font-size:10.5px;padding:4px 7px 3px}
+  #panel{padding:12px 12px 10px}
+  #panel p{font-size:12px}
+  .formfield .fk{flex:0 0 92px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="hud">
+    <div class="chip"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><rect width="10" height="10" fill="#4E9A92"/><rect x="1" y="7" width="8" height="2" fill="#2A3B33"/><rect x="4" y="1" width="2" height="6" fill="#F4EFD9"/></svg><span>SEM <b id="h-sem">1</b></span></div>
+    <div class="chip"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><rect x="2" y="1" width="6" height="8" fill="#E8B84B"/><rect x="1" y="2" width="8" height="6" fill="#E8B84B"/><rect x="4" y="4" width="2" height="2" fill="#C08A2E"/></svg><span><b id="h-geld">€ 12.000</b></span></div>
+    <div class="chip"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><rect x="1" y="2" width="8" height="6" fill="#C0503E"/><rect x="2" y="4" width="6" height="4" fill="#C0503E"/><rect x="2" y="1" width="6" height="2" fill="#C0503E"/><rect x="4" y="3" width="2" height="3" fill="#F4EFD9"/></svg><span>KRAFT <b id="h-kraft">100</b></span></div>
+    <div class="chip"><span>VERSUCHE <span class="attdots" id="h-att">●○○</span></span></div>
+    <div class="chip hot"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><rect x="1" y="1" width="8" height="8" fill="#2C4A72"/><rect x="2" y="2" width="6" height="3" fill="#F4EFD9"/><rect x="2" y="6" width="4" height="2" fill="#E8B84B"/></svg><span>KARTEN <b id="h-cards">0</b>/10</span></div>
+  </div>
+
+  <div id="stage">
+    <div id="bg"></div>
+    <div id="fx"></div>
+    <div id="hots"></div>
+    <div id="chlabel">START</div>
+    <div id="toast"></div>
+    <div id="panelwrap"><div id="panel"></div></div>
+    <div id="transit"><div class="roadstripes"></div><div class="tsub">UNTERWEGS</div><div class="tlabel" id="tlabel"></div><div id="walker"></div></div>
+    <div id="start">
+      <div class="kick">德语区语言与文化 · 主题汇报</div>
+      <div class="bigt">DREI VERSUCHE</div>
+      <div class="subt">三 次 机 会</div>
+      <div class="subt2">EIN INTERAKTIVES SPIEL · 德国留学之路</div>
+      <div class="desc">在德国，一门必修课你通常有三次机会。<br>第三次失败，失去的不只是一门课，<br>而是在<b>全德国</b>继续读这个专业的资格。<br><span style="font-family:var(--mono);font-size:10.5px">全程约 8 分钟 · 沿途收集 10 张制度知识卡 · 终点附知识导图</span></div>
+      <button id="startbtn">START</button>
+      <div class="hint">© LI, XIAO · MASCHINENBAU B.SC. · WS 2025/26</div>
+    </div>
+  </div>
+
+  <div id="dlg">
+    <div id="portbox"></div>
+    <div id="dsay">
+      <span id="who"></span>
+      <div id="text"></div>
+      <div id="choices"></div>
+    </div>
+    <div id="cont">▼ WEITER</div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   状态
+   ========================================================= */
+const S = {
+  sem: 1, ects: 0, kraft: 100, geld: 12000, wissen: 0, att: 0,
+  prep: 32, log: [], crisisPicks: [], toldMom: false, leave: 0,
+  sprache: 0, adresse: 0, extraSem: 0, delay: 0, pings: 0,
+  thesisFixed: false, ending: 'A', cards: []
+};
+
+const $ = s => document.querySelector(s);
+const eur = n => (n < 0 ? '− € ' : '€ ') + Math.abs(Math.round(n)).toLocaleString('de-DE');
+
+/* 测试探针（只读，便于自动化回归） */
+window.__probe = () => ({ current, prep: S.prep, wissen: S.wissen, sem: S.sem, cards: S.cards.length, picks: S.crisisPicks });
+
+function pay(g, k){
+  S.geld += (g || 0); S.kraft += (k || 0);
+  S.kraft = Math.max(0, Math.min(100, S.kraft));
+}
+
+/* ---- 归零监测：KRAFT / GELD 跌破底线 → 专属结局，游戏重开 ---- */
+const GAMEOVERS = ['gameoverK', 'gameoverG'];
+function checkVitals(){
+  if (GAMEOVERS.includes(current)) return false;
+  if (S.kraft <= 0){ go('gameoverK'); return true; }
+  if (S.geld <= -6000){ go('gameoverG'); return true; }
+  return false;
+}
+
+function hud(){
+  $('#h-sem').textContent = S.sem;
+  $('#h-geld').textContent = eur(S.geld);
+  $('#h-kraft').textContent = Math.round(S.kraft);
+  $('#h-att').textContent = ['○','○','○'].map((d,i) => i < S.att ? '●' : '○').join('');
+  $('#h-cards').textContent = S.cards.length;
+  $('#h-kraft').parentElement.classList.toggle('danger', S.kraft <= 25);
+  $('#h-geld').parentElement.classList.toggle('danger', S.geld < 0);
+}
+
+/* =========================================================
+   像素工具
+   ========================================================= */
+const R = (x,y,w,h,f) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`;
+const SVGW = inner => `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+
+function spr(rows, pal){
+  let out = '';
+  rows.forEach((row,y) => { [...row].forEach((ch,x) => { if(pal[ch]) out += R(x,y,1,1,pal[ch]); }); });
+  return `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${out}</svg>`;
+}
+
+/* =========================================================
+   角色
+   ========================================================= */
+const SPRITES = {};
+
+SPRITES.mom = spr([
+  '....aaaa....',
+  '..aaaaaaaa..',
+  '.aaaaaaaaaa.',
+  '.aaaaaaaaaa.',
+  '.abbbbbbbba.',
+  '.abdbbbbdba.',
+  '.abebbbbseba'.replace('s','b'),
+  '..abmmmmba..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#6E4326', b:'#F0C39A', d:'#3A2A20', e:'#E8988A', m:'#B05A4E', c:'#B85A6E'});
+
+SPRITES.you = spr([
+  '....aaaa....',
+  '..aaaaaaaa..',
+  '.aaaaaaaaaa.',
+  '.aaaaaaaaaa.',
+  '.abbbbbbbba.',
+  '.abdbbbbdba.',
+  '.abbbbbbbba.',
+  '..abmmmmba..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#22201E', b:'#F0C39A', d:'#3A2A20', m:'#B05A4E', c:'#E07A3E'});
+
+SPRITES.kai = spr([
+  '....dddddd..',
+  '..dddddddd..',
+  '.dddddddddd.',
+  '.dddddddddd.',
+  '.aabbbbbbba.',
+  '.abdbbbbdba.',
+  '.abbbbbbbba.',
+  '..abmmmmba..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {d:'#2C4A72', a:'#2A2018', b:'#E8B88A', m:'#8A5040', c:'#5BA8A0'});
+
+SPRITES.clara = spr([
+  '....aaaa....',
+  '..aaaaaaaa..',
+  '.aaaaaaaaaa.',
+  'aaaaaaaaaaaa',
+  '.aabbbbbbba.',
+  '.abdbbbbdba.',
+  '.abebbbbbeba'.replace('b','b'),
+  '..abmmmmba..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#D9849B', b:'#F0C39A', d:'#3A2A20', e:'#E8988A', m:'#B05A4E', c:'#D9A03E'});
+
+SPRITES.weber = spr([
+  '.....aa.....',
+  '....aaaa....',
+  '...aaaaaa...',
+  '.aaaaaaaaaa.',
+  '.aabbbbbbba.',
+  '.afbbbbbbfa.',
+  '.abfbbbbfba.',
+  '..annnnnna..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#9A9A96', b:'#EBD5BC', f:'#3A3A36', n:'#F4EFD9', m:'#A06858', c:'#8A6A72'});
+
+/* 教授：秃顶白发 + 圆眼镜 + 灰胡子 + 粗花呢外套 + 红领结 */
+SPRITES.bauer = spr([
+  '....hhhh....',
+  '..hhhhhhhh..',
+  '.hhhhhhhhhh.',
+  '.hhbbbbbbhh.',
+  '.hfbbbbbbfh.',
+  '.hfbbbbbbfh.',
+  '.abmmmmmmba.',
+  '..abmmmmba..',
+  '...abbbba...',
+  '..tttttttt..',
+  '.ttttkktttt.',
+  '.ttptttttpt.',
+  '.tttttttttt.'
+], {h:'#B8B4AC', a:'#B8B4AC', b:'#E8C0A0', f:'#2A2A26', m:'#9A967E', t:'#7A5A3E', k:'#C0503E', p:'#4E9A92'});
+
+/* 主角全身像：橙夹克 + 牛仔裤 + 棕色背包 */
+SPRITES.youbody = spr([
+  '.....aaaa.....',
+  '....aaaaaa....',
+  '...aaaaaaaa...',
+  '...abbbbbba...',
+  '...abdbbdba...',
+  '...abbbbbba...',
+  '....abbbba....',
+  '..rrccccccrr..',
+  '.rrccccccccrr.',
+  '.rrccccccccrr.',
+  '...cccccccc...',
+  '...cccccccc...',
+  '...cccccccc...',
+  '...jjj..jjj...',
+  '...jjj..jjj...',
+  '...jjj..jjj...',
+  '...jjj..jjj...',
+  '..jjjj..jjjj..',
+  '..ssss..ssss..',
+  '..............'
+], {a:'#22201E', b:'#F0C39A', d:'#3A2A20', c:'#E07A3E', r:'#5A4632', j:'#4A6A8A', s:'#26261F'});
+
+SPRITES.kraemer = spr([
+  '....aaaa....',
+  '..aaaaaaaa..',
+  '.aaaaaaaaaa.',
+  '.aabbbbbbba.',
+  '.abdbbbbdba.',
+  '.abbaaaabba.',
+  '.abaaaaaaba.',
+  '..aaaaaaaa..',
+  '...aaaaaa...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#5A4632', b:'#E8C0A0', d:'#3A2A20', c:'#7A5A3E'});
+
+SPRITES.rui = spr([
+  '....aaaa....',
+  '..aaaaaaaa..',
+  '.aaaaaaaaaa.',
+  '.aaaaaaaaaa.',
+  '.aabbbbbbba.',
+  '.afbbbbbbaa.',
+  '.abfbbbbfba.',
+  '.abbbbbbbba.',
+  '..abmmmmba..',
+  '...abbbba...',
+  '..cccccccc..',
+  '.cccccccccc.',
+  '.cccccccccc.'
+], {a:'#22201E', b:'#F0C39A', f:'#3A3A36', m:'#B05A4E', c:'#5F8C5A'});
+
+SPRITES.book = spr([
+  '............',
+  '.cccccccccc.',
+  '.ceeeeeeeec.',
+  '.cegeeeegec.',
+  '.ceegeeeeec.',
+  '.ceeeegeeec.',
+  '.ceeeeeeeec.',
+  '.ceeeeeeeec.',
+  '.ceeeeeeeec.',
+  '.cccccccccc.',
+  '.eeeeeeeeee.',
+  '............',
+  '............'
+], {c:'#2C4A72', e:'#F4EFD9', g:'#E8B84B'});
+
+SPRITES.mail = spr([
+  '............',
+  '............',
+  '.eeeeeeeeee.',
+  '.eeeeeeeeee.',
+  '.er......re.',
+  '.e..r..r..e.',
+  '.e...rr...e.',
+  '.e........e.',
+  '.eeeeeeeeee.',
+  '.rrrrrrrrrr.',
+  '.eeeeeeeeee.',
+  '............',
+  '............'
+], {e:'#F4EFD9', r:'#C0503E'});
+
+const WHO = {
+  sys:  {n:'', sprite:null, cls:''},
+  you:  {n:'你 · 内心', sprite:'you', cls:''},
+  mom:  {n:'妈妈 · 电话那头', sprite:'mom', cls:''},
+  kai:  {n:'KAI · 学长', sprite:'kai', cls:''},
+  clara:{n:'CLARA · WG 室友', sprite:'clara', cls:''},
+  weber:{n:'FRAU WEBER · 秘书处', sprite:'weber', cls:''},
+  bauer:{n:'PROF. BAUER · Thermodynamik', sprite:'bauer', cls:''},
+  kraemer:{n:'HERR KRÄMER · 学业咨询', sprite:'kraemer', cls:''},
+  rui:  {n:'王蕊 · 同届', sprite:'rui', cls:''},
+  mail: {n:'邮箱', sprite:'mail', cls:'mail'},
+  book: {n:'制度手册 · 知识卡', sprite:'book', cls:'book'}
+};
+
+/* =========================================================
+   场景背景（像素公路世界）
+   ========================================================= */
+function skyGrad(top, bottom){
+  return `<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>` +
+    `<rect width="320" height="180" fill="url(#sg)"/>`;
+}
+const cloud = (x,y,w) => R(x,y,w,4,'#FFFFFF') + R(x+3,y-3,w-6,3,'#FFFFFF');
+const tree = (x,y,s,c1,c2) => R(x+s*2, y+s*3, s, s*2, '#7A5A3E') + R(x, y, s*5, s*2, c1) + R(x+s, y-s, s*3, s, c2) + R(x+s, y+s*2, s*3, s, c1);
+
+/* 远景城市 + 大学塔 */
+function cityline(c){
+  let o = '';
+  const xs = [40, 60, 74, 86, 104, 216, 232, 248, 262, 278];
+  xs.forEach((x,i) => { o += R(x, 72-(i%3)*3, 10, 12, c); });
+  o += R(146, 34, 28, 50, c);          /* 大学主楼 */
+  o += R(150, 20, 4, 16, c);
+  o += R(150, 12, 12, 6, c);           /* 旗 */
+  o += R(168, 44, 6, 40, c);
+  o += R(146, 34, 28, 4, '#F4EFD9');   /* 檐线 */
+  return o;
+}
+
+/* 一点透视公路 */
+function roadPersp(roadC, dashC, groundC, edgeC){
+  let o = `<polygon points="150,76 170,76 250,180 70,180" fill="${roadC}"/>`;
+  o += `<polygon points="148,76 150,76 66,180 62,180" fill="${edgeC}"/>`;
+  o += `<polygon points="170,76 172,76 258,180 254,180" fill="${edgeC}"/>`;
+  let y = 170, w = 5.2, h = 9;
+  while (y > 82){ o += R(160-w/2, y, w, h, dashC); y -= h + Math.max(3, h*0.55); w *= 0.80; h *= 0.80; }
+  return o;
+}
+
+/* 公共地面 + 树行 */
+function groundRow(groundC, treeC1, treeC2, startY){
+  let o = R(0, startY, 320, 180-startY, groundC);
+  for (let i = 0; i < 7; i++){
+    const t = i / 6, x = 8 + t * 84, s = 2 + (1-t) * 5;
+    o += tree(Math.round(x), Math.round(startY + 6 - s*2), Math.round(s), treeC1, treeC2);
+    const x2 = 214 + t * 90;
+    o += tree(Math.round(x2), Math.round(startY + 6 - s*2), Math.round(s), treeC1, treeC2);
+  }
+  return o;
+}
+
+const BG = {};
+
+BG.road = () => SVGW(
+  skyGrad('#CDE8D8', '#F0EBDD') +
+  cloud(30, 18, 26) + cloud(120, 10, 20) + cloud(250, 24, 30) +
+  R(270, 26, 16, 16, '#F2D98A') +                    /* 太阳 */
+  cityline('#9FB4A8') +
+  `<polygon points="0,74 320,74 320,86 0,86" fill="#A8C89A"/>` +
+  groundRow('#A8C89A', '#7FAF6E', '#93C582', 84) +
+  roadPersp('#8E9089', '#F4EFD9', '#7C7E78', 'A8C89A')
+);
+
+BG.langcenter = () => SVGW(
+  skyGrad('#BFDCE8', '#E8EDE4') +
+  cloud(40, 16, 24) + cloud(240, 22, 28) +
+  R(0, 96, 320, 84, '#A8C89A') +
+  R(60, 40, 200, 70, '#E4DCBE') +                     /* 主体 */
+  R(60, 40, 200, 6, '#8A9A90') +
+  R(52, 36, 216, 6, '#C97B5A') +                      /* 檐 */
+  R(120, 34, 80, 14, '#2C4A72') +                     /* 门牌 */
+  R(126, 37, 68, 8, '#F4EFD9') +
+  R(70, 56, 28, 22, '#BFDCE8') + R(222, 56, 28, 22, '#BFDCE8') +
+  R(74, 60, 20, 14, '#8FA6B2') + R(226, 60, 20, 14, '#8FA6B2') +
+  R(146, 66, 28, 44, '#C97B5A') +                     /* 门 */
+  R(150, 70, 20, 16, '#8A5040') +
+  /* 排队小人 */
+  R(100, 96, 4, 12, '#5BA8A0') + R(101, 90, 2, 6, '#F0C39A') +
+  R(110, 96, 4, 12, '#E07A3E') + R(111, 90, 2, 6, '#F0C39A') +
+  R(120, 96, 4, 12, '#B85A6E') + R(121, 90, 2, 6, '#F0C39A') +
+  R(130, 96, 4, 12, '#6E7A86') + R(131, 90, 2, 6, '#E8B88A') +
+  tree(16, 92, 4, '#7FAF6E', '#93C582') + tree(284, 92, 4, '#7FAF6E', '#93C582') +
+  /* 前景步道 */
+  R(30, 168, 260, 12, '#8E9089') + R(26, 168, 6, 12, '#7C7E78') + R(288, 168, 6, 12, '#7C7E78') +
+  R(64, 172, 12, 3, '#F4EFD9') + R(130, 172, 10, 3, '#F4EFD9') + R(196, 172, 10, 3, '#F4EFD9') + R(254, 172, 12, 3, '#F4EFD9')
+);
+
+BG.desk = () => SVGW(
+  skyGrad('#7A8CA0', '#C9B4A0') +                      /* 傍晚 */
+  R(196, 20, 90, 66, '#3A4A52') +                      /* 窗 */
+  R(200, 24, 82, 58, '#8A7A90') +
+  R(238, 26, 4, 54, '#3A4A52') + R(202, 50, 78, 4, '#3A4A52') +
+  R(210, 60, 12, 12, '#F2D98A') +                      /* 窗外灯 */
+  R(0, 86, 320, 94, '#2E2620') +                       /* 墙 */
+  R(0, 86, 320, 8, '#241E1A') +
+  R(24, 96, 60, 30, '#6E5A44') +                       /* 书架 */
+  R(26, 98, 56, 26, '#241E1A') +
+  R(28, 100, 10, 8, '#C97B5A') + R(40, 100, 8, 8, '#2C4A72') + R(50, 100, 10, 8, '#5F8C5A') +
+  R(28, 110, 12, 8, '#E8B84B') + R(42, 110, 9, 8, '#8A5040') + R(54, 110, 8, 8, '#B85A6E') +
+  R(0, 148, 320, 32, '#5A4632') +                      /* 桌面 */
+  R(0, 148, 320, 5, '#7A5A3E') +
+  /* 笔记本电脑（打开，屏朝你） */
+  R(96, 96, 128, 50, '#1A1E1C') +
+  R(100, 100, 120, 42, '#BFD8D2') +
+  R(102, 102, 116, 38, '#2A3B33') +
+  R(106, 106, 88, 5, '#4E9A92') +
+  R(106, 115, 60, 3, '#AFC5BC') + R(106, 121, 74, 3, '#AFC5BC') + R(106, 127, 48, 3, '#AFC5BC') +
+  R(112, 136, 96, 6, '#C0503E') +
+  /* 桌上杂物 */
+  R(60, 140, 14, 8, '#E8B84B') + R(240, 142, 20, 6, '#9A9A96') +
+  R(268, 132, 10, 16, '#F0C39A') +                     /* 咖啡杯 */
+  R(268, 129, 10, 4, '#6E4326')
+);
+
+BG.wghouse = () => SVGW(
+  skyGrad('#CDE8D8', '#F0EBDD') +
+  cloud(50, 18, 26) +
+  R(0, 104, 320, 76, '#A8C89A') +
+  R(70, 34, 180, 84, '#E4DCBE') +                      /* WG 楼 */
+  `<polygon points="64,36 160,10 256,36" fill="#C97B5A"/>` +
+  R(88, 48, 30, 26, '#2C4A72') + R(132, 48, 30, 26, '#2C4A72') + R(176, 48, 30, 26, '#2C4A72') +
+  R(88, 84, 30, 26, '#F2D98A') + R(132, 84, 30, 26, '#F2D98A') + R(176, 84, 30, 26, '#F2D98A') +
+  R(92, 52, 22, 18, '#8FA6B2') + R(136, 52, 22, 18, '#8FA6B2') + R(180, 52, 22, 18, '#8FA6B2') +
+  R(92, 88, 8, 8, '#E07A3E') + R(104, 88, 8, 8, '#5BA8A0') +
+  R(136, 88, 8, 8, '#B85A6E') + R(148, 88, 8, 8, '#F2D98A') +
+  R(180, 88, 8, 8, '#D9849B') + R(192, 88, 8, 8, '#8A9A90') +
+  R(139, 46, 16, 5, '#C0503E') +                       /* 传单 */
+  tree(20, 96, 5, '#7FAF6E', '#93C582') + tree(262, 92, 5, '#7FAF6E', '#93C582') +
+  tree(288, 100, 4, '#7FAF6E', '#93C582') +
+  /* 信箱 */
+  R(246, 116, 14, 12, '#C97B5A') + R(248, 118, 10, 8, '#F4EFD9')
+);
+
+BG.library = () => SVGW(
+  R(0, 0, 320, 180, '#2A3230') +
+  R(0, 0, 320, 10, '#1A2220') +
+  /* 书架墙 */
+  R(16, 24, 88, 110, '#3A3E3A') + R(246, 24, 88, 110, '#3A3E3A') +
+  R(20, 28, 80, 102, '#242C28') + R(250, 28, 80, 102, '#242C28') +
+  [0,1,2,3].map(i => {
+    let r1 = '';
+    const cs = ['#C97B5A','#2C4A72','#5F8C5A','#E8B84B','#B85A6E','#8A5040','#5BA8A0'];
+    for (let j = 0; j < 9; j++){ r1 += R(24 + j*9, 32 + i*25, 6, 18, cs[(i+j)%7]); r1 += R(254 + j*9, 32 + i*25, 6, 18, cs[(i*2+j)%7]); }
+    return r1;
+  }).join('') +
+  /* 窗（夜） */
+  R(130, 24, 60, 50, '#1A2220') + R(134, 28, 52, 42, '#3A4A62') +
+  R(158, 28, 4, 42, '#1A2220') + R(134, 47, 52, 4, '#1A2220') +
+  R(144, 20, 4, 4, '#F4EFD9') + R(166, 16, 3, 3, '#F4EFD9') +  /* 星 */
+  R(126, 78, 68, 5, '#5A4632') +
+  /* 长桌 + 台灯 */
+  R(96, 118, 128, 8, '#5A4632') + R(104, 126, 6, 40, '#5A4632') + R(210, 126, 6, 40, '#5A4632') +
+  R(110, 98, 24, 20, '#C9C2A4') + R(112, 100, 20, 16, '#F4EFD9') +   /* 摊开的书 */
+  R(150, 96, 18, 22, '#2C4A72') +                                     /* 笔记本 */
+  R(178, 100, 16, 18, '#F0C39A') +                                    /* 咖啡 */
+  /* 台灯 */
+  R(226, 100, 3, 18, '#3A3A36') + R(220, 94, 14, 8, '#E8B84B') + R(222, 100, 10, 4, '#F2D98A') +
+  `<polygon points="0,166 320,166 320,180 0,180" fill="#202824"/>`
+);
+
+BG.lecture = () => SVGW(
+  R(0, 0, 320, 180, '#BFD4C6') +
+  R(0, 0, 320, 14, '#8A9A90') +
+  /* 黑板 */
+  R(84, 18, 152, 66, '#2E3A32') + R(88, 22, 144, 58, '#24302A') +
+  R(96, 32, 30, 3, '#D8E4D8') + R(96, 40, 22, 3, '#D8E4D8') + R(96, 48, 34, 3, '#D8E4D8') +
+  R(132, 32, 26, 3, '#D8E4D8') + R(140, 40, 26, 3, '#D8E4D8') +
+  R(178, 32, 20, 3, '#E8B84B') + R(184, 44, 34, 3, '#D8E4D8') + R(178, 52, 18, 3, '#D8E4D8') +
+  /* 讲台 */
+  R(146, 84, 28, 20, '#5A4632') + R(150, 104, 4, 12, '#5A4632') + R(166, 104, 4, 12, '#5A4632') +
+  R(140, 80, 40, 5, '#7A5A3E') +
+  /* 教授 */
+  R(150, 60, 20, 22, '#7A5A3E') + R(154, 48, 12, 12, '#F0C39A') + R(152, 44, 16, 5, '#5A4632') +
+  /* 从后往前看：一排排后脑勺（第一人称坐在 lecture 里） */
+  R(0, 106, 320, 74, '#9AA89A') +
+  [0,1,2].map(i => {
+    let r1 = '';
+    const y = 112 + i*22, cs = ['#22201E','#6E4326','#5A4632','#2A2018'];
+    for (let j = 0; j < 6; j++){
+      const x = 14 + j*52 + (i%2)*18, s = 1 + i*0.4;
+      r1 += R(x, y+Math.round(18*s), Math.round(26*s), Math.round(10*s), cs[(i+j)%4]);
+      r1 += R(x+Math.round(8*s), y+Math.round(6*s), Math.round(12*s), Math.round(12*s), cs[(i+j)%4]);
+    }
+    return r1;
+  }).join('') +
+  /* 你的桌沿（前景） */
+  R(0, 168, 320, 12, '#7A5A3E') + R(60, 160, 44, 10, '#F4EFD9') + R(70, 155, 24, 8, '#2C4A72')
+);
+
+BG.board = () => SVGW(
+  R(0, 0, 320, 180, '#8FB4A0') +
+  R(0, 0, 320, 12, '#6E8272') +
+  /* 公告栏 */
+  R(40, 24, 240, 100, '#5A4632') + R(48, 32, 224, 84, '#C9C2A4') +
+  R(56, 40, 60, 30, '#F4EFD9') + R(60, 46, 40, 3, '#5B6B5E') + R(60, 52, 34, 3, '#5B6B5E') + R(60, 58, 44, 3, '#C0503E') +
+  R(126, 40, 60, 30, '#F4EFD9') + R(130, 46, 40, 3, '#5B6B5E') + R(130, 52, 44, 3, '#C0503E') + R(130, 58, 30, 3, '#5B6B5E') +
+  R(196, 40, 60, 30, '#F4EFD9') + R(200, 46, 44, 3, '#C0503E') + R(200, 52, 36, 3, '#5B6B5E') +
+  R(84, 80, 130, 26, '#F4EFD9') + R(88, 85, 90, 3, '#5B6B5E') + R(88, 91, 100, 3, '#5B6B5E') + R(88, 97, 70, 3, '#5B6B5E') +
+  /* 红色成绩 5,0 */
+  R(150, 118, 20, 30, '#F4EFD9') +
+  R(154, 124, 12, 3, '#C0503E') + R(154, 131, 12, 3, '#C0503E') + R(154, 138, 12, 3, '#C0503E') + R(154, 145, 12, 3, '#C0503E') +
+  /* 地面 */
+  R(0, 138, 320, 42, '#7FA692') + R(0, 138, 320, 5, '#6E8272')
+);
+
+BG.street = () => SVGW(
+  R(0, 0, 320, 180, '#26303E') +
+  R(130, 40, 4, 4, '#F4EFD9') + R(200, 24, 3, 3, '#F4EFD9') + R(70, 20, 3, 3, '#F4EFD9') +
+  /* 楼剪影 */
+  R(0, 60, 70, 90, '#1A222E') + R(74, 78, 60, 72, '#202832') + R(190, 52, 66, 98, '#1A222E') + R(262, 84, 58, 66, '#202832') +
+  [0,1,2].map(i => R(10+i*20, 68, 8, 6, '#E8B84B') + R(200+i*18, 60, 8, 6, '#F2D98A')).join('') +
+  R(96, 90, 20, 8, '#8A7A90') +
+  /* 路灯 */
+  R(160, 40, 4, 100, '#3A3A36') + R(150, 34, 24, 8, '#F2D98A') + R(146, 42, 32, 4, '#E8B84B') +
+  `<polygon points="150,140 170,140 240,180 80,180" fill="#3A4248"/>` +
+  R(158, 150, 4, 4, '#F4EFD9') + R(159, 160, 3, 3, '#F4EFD9') + R(158, 170, 4, 4, '#F4EFD9') +
+  /* 你手上的信（前景） */
+  R(200, 150, 70, 34, '#F4EFD9') + R(200, 150, 70, 5, '#C0503E') + R(224, 158, 24, 16, '#E4DCBE')
+);
+
+BG.examhall = () => SVGW(
+  R(0, 0, 320, 180, '#D8E0D8') +
+  R(0, 0, 320, 12, '#8A9A90') +
+  /* 钟 */
+  R(148, 16, 24, 24, '#F4EFD9') + R(159, 20, 2, 8, '#3A2A20') + R(160, 27, 6, 2, '#3A2A20') +
+  /* 告示 */
+  R(30, 24, 60, 22, '#F4EFD9') + R(34, 30, 40, 3, '#C0503E') + R(34, 36, 30, 3, '#5B6B5E') +
+  R(230, 24, 60, 22, '#F4EFD9') + R(234, 30, 40, 3, '#C0503E') + R(234, 36, 34, 3, '#5B6B5E') +
+  /* 座位排（第一人称在座位 17） */
+  R(0, 60, 320, 120, '#C2CCC2') +
+  [0,1,2].map(i => {
+    let r1 = '';
+    const y = 66 + i*30;
+    for (let j = 0; j < 5; j++){
+      const x = 20 + j*58;
+      r1 += R(x, y+12, 34, 20, '#5A4632');        /* 桌 */
+      r1 += R(x+2, y+32, 4, 12, '#3A2A20');
+      r1 += R(x+6, y, 22, 12, cs3(i,j));          /* 后脑勺 */
+    }
+    return r1;
+  }).join('') +
+  /* 你的桌面（前景） */
+  R(70, 148, 180, 32, '#7A5A3E') +
+  R(84, 132, 70, 18, '#F4EFD9') + R(88, 136, 50, 10, '#E4DCBE') +   /* 答题纸 */
+  R(170, 138, 20, 10, '#3A3A36'),                                     /* 笔 */
+  ''
+);
+function cs3(i,j){ const c = ['#22201E','#6E4326','#2A2018','#5A4632']; return c[(i+j)%4]; }
+
+BG.office = () => SVGW(
+  R(0, 0, 320, 180, '#E4E0CE') +
+  R(0, 0, 320, 14, '#8A9A90') +
+  /* 挂牌 */
+  R(110, 22, 100, 18, '#2C4A72') + R(116, 26, 88, 10, '#F4EFD9') +
+  /* 柜台 */
+  R(0, 108, 320, 34, '#5A4632') + R(0, 108, 320, 6, '#7A5A3E') +
+  R(20, 120, 40, 18, '#C9C2A4') + R(140, 118, 50, 10, '#E8B84B') +  /* 文件托盘 */
+  R(230, 122, 30, 16, '#F4EFD9') +
+  /* 文件格 */
+  R(36, 60, 90, 48, '#8A9A90') + [0,1,2,3].map(i => R(40, 66 + i*11, 82, 8, i%2 ? '#F4EFD9' : '#C9C2A4')).join('') +
+  R(198, 52, 70, 56, '#5F8C5A') +  /* 盆栽 */
+  R(224, 40, 16, 14, '#5F8C5A') + R(228, 32, 8, 10, '#7FAF6E') +
+  R(212, 44, 8, 8, '#4A7042') + R(244, 46, 8, 8, '#4A7042') +
+  /* 秘书 */
+  R(126, 66, 26, 40, '#6E7A86') + R(132, 48, 14, 16, '#E8D5BC') + R(130, 42, 18, 7, '#9A9A96') +
+  /* 前景：登记表 */
+  R(92, 146, 136, 34, '#F4EFD9') + R(92, 146, 136, 5, '#C0503E') +
+  R(100, 156, 60, 3, '#8A9A90') + R(100, 163, 80, 3, '#8A9A90') + R(100, 170, 50, 3, '#8A9A90')
+);
+
+/* 房间：搬进来的第一晚（可交互） */
+BG.room = () => SVGW(
+  R(0, 0, 320, 130, '#7A6455') +
+  R(0, 124, 320, 6, '#5A4638') +
+  R(0, 130, 320, 50, '#9A7858') +
+  R(0, 136, 320, 2, 'rgba(0,0,0,.12)') + R(0, 152, 320, 2, 'rgba(0,0,0,.12)') + R(0, 168, 320, 2, 'rgba(0,0,0,.12)') +
+  /* 窗（夜）+ 月亮 + 窗帘 */
+  R(120, 14, 76, 52, '#5A4638') + R(124, 18, 68, 44, '#2C4A62') +
+  R(156, 18, 4, 44, '#5A4638') + R(124, 38, 68, 4, '#5A4638') +
+  R(170, 24, 8, 8, '#F4EFD9') +
+  R(130, 26, 2, 2, '#F4EFD9') + R(178, 44, 2, 2, '#F4EFD9') +
+  R(114, 12, 8, 58, '#B85A6E') + R(194, 12, 8, 58, '#B85A6E') +
+  /* 海报 */
+  R(24, 22, 24, 32, '#2C4A72') + R(27, 25, 18, 10, '#F4EFD9') + R(29, 42, 14, 2, '#E8B84B') + R(29, 46, 10, 2, '#C0503E') +
+  /* 纸箱堆（左） */
+  R(22, 40, 26, 20, '#C9A36A') + R(22, 40, 26, 3, '#B08A50') + R(30, 48, 10, 2, '#8A6A3E') +
+  R(14, 60, 34, 24, '#C9A36A') + R(14, 60, 34, 3, '#B08A50') + R(26, 66, 10, 2, '#8A6A3E') + R(26, 72, 12, 2, '#8A6A3E') +
+  /* 床（左下）：架 + 床垫 + 枕头 + 橙毯 */
+  R(4, 96, 100, 34, '#5A4632') +
+  R(8, 92, 92, 10, '#F4EFD9') +
+  R(10, 84, 26, 12, '#FFF9E8') +
+  R(40, 90, 58, 14, '#E07A3E') +
+  R(40, 90, 58, 3, '#C06530') + R(58, 93, 4, 11, '#C06530') +
+  R(8, 130, 6, 14, '#3A2A20') + R(94, 130, 6, 14, '#3A2A20') +
+  /* 电视（右墙） */
+  R(236, 40, 52, 34, '#26261F') + R(240, 44, 44, 26, '#101815') +
+  R(244, 48, 18, 8, '#4E9A92') + R(266, 56, 12, 8, '#E8B84B') + R(244, 60, 26, 6, '#2C4A72') +
+  /* 沙发（右下） */
+  R(212, 100, 92, 26, '#4E9A92') +
+  R(216, 94, 84, 12, '#79C4BC') +
+  R(218, 104, 34, 18, '#E4DCBE') + R(258, 104, 34, 18, '#E4DCBE') +
+  R(252, 96, 6, 26, '#3A7A72') +
+  R(216, 126, 6, 12, '#3A2A20') + R(294, 126, 6, 12, '#3A2A20') +
+  /* 书桌（中下）：桌面 + 腿 + 书 + 信件（金边） + 台灯 */
+  R(118, 116, 78, 10, '#8A6A4E') +
+  R(122, 126, 6, 26, '#5A4638') + R(186, 126, 6, 26, '#5A4638') +
+  R(128, 106, 24, 10, '#E4DCBE') + R(130, 102, 10, 4, '#C97B5A') +
+  R(156, 104, 22, 12, '#F4EFD9') + R(158, 106, 18, 3, '#C0503E') + R(158, 111, 14, 2, '#8A9A90') +
+  R(166, 96, 3, 8, '#3A3A36') + R(160, 92, 14, 6, '#E8B84B') +
+  /* 盆栽 + 地毯 */
+  R(200, 108, 12, 10, '#C97B5A') + R(202, 96, 8, 12, '#5F8C5A') + R(205, 90, 4, 8, '#7FAF6E') +
+  R(96, 150, 128, 22, '#B85A6E') + R(100, 154, 120, 14, '#C97B8A')
+);
+
+/* 医院：KRAFT 归零结局（心电图动画） */
+BG.hospital = () => SVGW(
+  R(0, 0, 320, 180, '#DCE4E4') +
+  R(0, 0, 320, 12, '#8A9A98') +
+  /* 窗（夜）+ 月亮 */
+  R(18, 22, 66, 44, '#8A9A98') + R(22, 26, 58, 36, '#3A4A62') +
+  R(48, 26, 3, 36, '#8A9A98') + R(22, 42, 58, 3, '#8A9A98') +
+  R(60, 30, 10, 10, '#F4EFD9') + R(63, 33, 3, 3, '#D8DCD4') +
+  /* NOTAUFNAHME（急诊）牌 */
+  R(210, 16, 90, 18, '#C0503E') + R(216, 23, 78, 5, '#F4EFD9') +
+  '<text x="216" y="31" font-family="Courier New,monospace" font-size="7" fill="#F4EFD9">NOTAUFNAHME</text>' +
+  /* 病床 + 主角躺着 */
+  R(60, 108, 130, 16, '#5A6A72') +
+  R(64, 100, 122, 12, '#E4E8E4') +
+  R(66, 92, 26, 10, '#FFF9E8') +
+  R(72, 88, 18, 12, '#F0C39A') +
+  R(74, 84, 14, 5, '#22201E') +
+  R(78, 94, 2, 2, '#3A2A20') + R(84, 94, 2, 2, '#3A2A20') +
+  R(96, 96, 88, 16, '#E07A3E') +
+  R(96, 96, 88, 3, '#C06530') + R(120, 99, 5, 13, '#C06530') +
+  R(64, 124, 6, 30, '#3A4A44') + R(180, 124, 6, 30, '#3A4A44') +
+  /* 输液架 */
+  R(220, 54, 4, 84, '#8A9A98') +
+  R(212, 46, 20, 5, '#8A9A98') +
+  R(216, 54, 12, 18, '#CFE8E4') + R(216, 54, 12, 4, '#79C4BC') +
+  R(222, 72, 2, 34, '#79C4BC') +
+  /* 心电监护仪（动画心电图） */
+  R(240, 66, 66, 44, '#26261F') +
+  R(244, 70, 58, 36, '#101815') +
+  '<polyline class="ecgline" points="248,88 256,88 260,80 264,96 268,76 272,88 282,88 288,84 294,88 298,88" fill="none" stroke="#79C4BC" stroke-width="2"/>' +
+  R(244, 108, 58, 4, '#C0503E') +
+  /* 地面 */
+  R(0, 150, 320, 30, '#C2CCC8') + R(0, 150, 320, 3, '#A8B4B0')
+);
+
+/* 机场：GELD 见底结局 */
+BG.airport = () => SVGW(
+  R(0, 0, 320, 180, '#D8DCDC') +
+  R(0, 0, 320, 12, '#8A9A98') +
+  /* 航班信息板 */
+  R(40, 20, 240, 54, '#26261F') +
+  '<text x="52" y="36" font-family="Courier New,monospace" font-size="9" fill="#E8B84B">ABFLUG · DEPARTURES</text>' +
+  '<text x="52" y="52" font-family="Courier New,monospace" font-size="9" fill="#F4EFD9">AB 07   18:20   XIAN</text>' +
+  '<text x="52" y="66" font-family="Courier New,monospace" font-size="9" fill="#C0503E">CHECK-IN GESCHLOSSEN</text>' +
+  R(196, 26, 68, 8, '#3A4A44') +
+  /* 落地窗 + 飞机 */
+  R(40, 84, 240, 60, '#8A9A98') + R(44, 88, 232, 52, '#9FB4C8') +
+  R(52, 92, 224, 4, '#8A9A98') +
+  '<polygon points="150,112 176,112 196,120 176,124 150,124" fill="#F4F7F4"/>' +
+  '<polygon points="158,112 170,100 174,100 168,112" fill="#F4F7F4"/>' +
+  R(196, 118, 3, 3, '#C0503E') +
+  /* 椅子排 */
+  [0,1,2,3,4,5].map(i => R(44 + i*40, 148, 28, 8, '#4E9A92') + R(44 + i*40, 140, 28, 6, '#79C4BC')).join('') +
+  /* 行李箱（前景右） */
+  R(252, 128, 26, 34, '#C0503E') + R(252, 128, 26, 5, '#8A3A2E') + R(262, 120, 6, 8, '#8A9A98') +
+  /* 地面 */
+  R(0, 156, 320, 24, '#C2CCC8') + R(0, 156, 320, 3, '#A8B4B0')
+);
+
+BG.gate = () => SVGW(
+  skyGrad('#CDE8D8', '#F0EBDD') +
+  cloud(40, 20, 24) + cloud(240, 14, 28) +
+  R(270, 22, 16, 16, '#F2D98A') +
+  cityline('#9FB4A8') +
+  R(0, 96, 320, 84, '#A8C89A') +
+  /* 校门柱 */
+  R(96, 52, 22, 62, '#E4DCBE') + R(100, 46, 14, 8, '#C97B5A') +
+  R(202, 52, 22, 62, '#E4DCBE') + R(206, 46, 14, 8, '#C97B5A') +
+  /* 横幅 */
+  R(118, 56, 84, 16, '#2C4A72') + R(122, 60, 76, 8, '#F4EFD9') +
+  roadPersp('#8E9089', '#F4EFD9', '#7C7E78', '#A8C89A') +
+  tree(24, 88, 5, '#7FAF6E', '#93C582') + tree(280, 88, 5, '#7FAF6E', '#93C582') +
+  R(288, 108, 5, 5, '#E07A3E') + R(282, 114, 5, 5, '#5BA8A0') + R(288, 120, 5, 5, '#E8B84B')
+);
+
+/* =========================================================
+   知识卡（收集要素）
+   ========================================================= */
+const CARDS = {
+  dsh:      {n:'KARTE 01', t:'语言关 · DSH', x:'多数高校一年仅 2 次考期，排在学期开始之前；报名先要 C1；笔试口试都必须过；多数专业要 DSH-2（≥67%）。全国框架不设统一重考上限，由各校 DSH-Ordnung 自定。真正卡人的是一年两次的窗口——一次没过，就是半年。', src:'dsh.de 官方 FAQ；Uni Siegen DSH-Ordnung §9'},
+  gebuehren:{n:'KARTE 02', t:'学费的真相', x:'德国 16 个州里 15 个不收普遍学费，但巴登-符腾堡州对非欧盟学生收 1.500 €/学期（第二学位 650 €）；TUM 本科 2.000–3.000 €/硕士 4.000–6.000 €。所有学生还要交 70–430 € 的学期费（含学期票）。', src:'州高教法、各校收费页（2026-10 核对）'},
+  wohnung:  {n:'KARTE 03', t:'房子与 Anmeldung', x:'大学不包住宿：Studierendenwerk 宿舍仅覆盖约 10% 学生，2026-09 全德约 10.5 万人排队。一条 WG 广告常有上百份申请。没有可登记住址 → 无法完成 Anmeldung → Prüfungsamt 的 Bescheid 按地址寄出且不确认你是否收到。', src:'Deutsches Studierendenwerk（2026-09，媒体转引）；DAAD 找房指南'},
+  dreimal:  {n:'KARTE 04', t:'三次机会 · §12', x:'一门未通过的模块考试可以补考两次——总共三次机会。这写在各校 Prüfungsordnung 里，通常没有例外通道。', src:'各校 Prüfungsordnung，例：KIT、LMU、TU Berlin'},
+  final:    {n:'KARTE 05', t:'最终不及格 · 全国失格', x:'第三次仍未通过 = endgültig nicht bestanden：考试资格消灭、注销学籍，且同样适用于德国其他高校的相同专业；相近专业视各州法律而定。不可逆、全国联网。', src:'各州高校法；NRW、Bayern、Hamburg 规定'},
+  freiversuch:{n:'KARTE 06', t:'Freiversuch · 传言粉碎', x:'「首次失败不计次数」的 Freiversuch 真实存在，但通常限定：标准年限内 + 规定考期 + 指定模块。不是所有课都有，更不是「免费重考」。论坛的「发封邮件就算没考」是假的——未经委员会认可的缺席视为已参加且未通过。', src:'Uni des Saarlandes §17(4)；Uni Rostock §17；TU Ilmenau §21'},
+  anmeldung2:{n:'KARTE 07', t:'没人提醒你报名', x:'补考通常要自己报名（Anmeldung），错过截止期 = 浪费一次尝试。德国高校默认你已成年且已读过规章——制度不追人，人要追制度。', src:'各校 Prüfungsordnung 报名条款'},
+  flex:     {n:'KARTE 08', t:'弹性有价 · 都要申请', x:'休学（Urlaubssemester）、延期、困难申请（Härtefall）都存在，但每一件都要你自己写 Antrag、自己举证、自己付钱。学业没有法定兼职权利（CHE：「要么靠运气，要么靠钱」）。学业咨询免费且真懂规章，但不会来找你。', src:'CHE 2024；各校 Studienberatung 说明'},
+  titel:    {n:'KARTE 09', t:'一个词，两个月', x:'论文题目登记后即具约束力，提交论文的题目必须与登记表逐字一致（wortgleich）。改题须书面申请 + 两位评审签字 + 考试委员会批准，通常只有一次、限登记后 4 周内。行政错误不构成 Härtefall——风险由学生承担。', src:'HTW Berlin 改题表；RWTH Aachen；Uni Duisburg-Essen §21(3)(6)'},
+  daten:    {n:'KARTE 10', t:'数据 · 延毕是常态', x:'本科辍学率：德国学生 28% vs 外国学生 41%（DZHW）。硕士按时毕业比例：2012 年 39,3% → 2023 年 29,8%；41,8% 超 1–2 学期。约四分之一学生至少多读一年。13 个百分点的差距不在智力，在条款、语言与一次重来的成本。', src:'DZHW 估算（至 2022 夏）；Destatis 2023 考试年度；CHE 2024'}
+};
+
+function collectCard(id){
+  if (S.cards.includes(id)) return;
+  S.cards.push(id);
+  hud();
+  const c = CARDS[id];
+  const t = $('#toast');
+  t.innerHTML = `<span class="tt">KARTE ERHALTEN · 收录知识卡 ${S.cards.length}/10</span><b>《${c.t}》</b>已存入制度手册`;
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('on'), 3400);
+}
+
+/* =========================================================
+   引擎
+   ========================================================= */
+let current = 'start';
+let SC = null;      /* 当前场景 spec */
+let idx = 0;        /* script 指针 */
+let typing = false, typeTimer = null, fullText = '';
+
+function drawBG(spec){
+  $('#bg').innerHTML = spec.bg();
+  const fx = $('#fx');
+  fx.className = '';
+  if (spec.night) fx.classList.add('night');
+  if (spec.rain)  fx.classList.add('rain');
+  if (spec.flash) fx.classList.add('flash');
+  $('#chlabel').textContent = spec.ch || '';
+}
+
+/* 清理舞台上的临时交互层（房间热点 / 立绘 / Zzz / 走路主角） */
+function cleanupStage(){
+  const hots = document.getElementById('hots');
+  if (hots){ hots.style.display = 'none'; hots.innerHTML = ''; }
+  ['youover','zzz'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  const wk = document.getElementById('walker'); if (wk) wk.style.display = 'none';
+}
+
+function go(id){
+  current = id;
+  SC = SCENES[id]();
+  idx = 0;
+  closePanel();
+  clearFlow();
+  clearArm();
+  cleanupStage();
+  drawBG(SC);
+  step();
+}
+
+function step(){
+  const it = SC.script[idx];
+  if (!it) return;
+  if (it.t === 'say'){ say(it); return; }
+  if (it.t === 'card'){ collectCard(it.id); idx++; step(); return; }
+  if (it.t === 'fn'){ it.fn(); hud(); if (checkVitals()) return; idx++; step(); return; }
+  if (it.t === 'jump'){ go(it.toFn ? it.toFn() : it.to); return; }
+  if (it.t === 'transit'){ transit(it.label, it.to); return; }
+  if (it.t === 'panel'){
+    if (it.flow){ showFlow(it.title, it.html); idx++; step(); return; }
+    showPanel(it.title, it.html, () => { idx++; step(); }, it.after); return;
+  }
+  if (it.t === 'choice'){ showChoices(it.opts, it.onPick); return; }
+  if (it.t === 'multi'){ showMulti(it); return; }
+  if (it.t === 'game'){ GAMES[it.kind](it); return; }
+}
+
+/* ---- 对白 ---- */
+function say(it){
+  const w = WHO[it.who];
+  $('#choices').innerHTML = '';
+  const whoEl = $('#who'), port = $('#portbox');
+  if (w && w.n){
+    whoEl.textContent = w.n;
+    whoEl.className = 'on ' + (w.cls || '');
+    port.innerHTML = w.sprite ? SPRITES[w.sprite] : '';
+    port.style.visibility = 'visible';
+  } else {
+    whoEl.className = '';
+    port.innerHTML = '';
+    port.style.visibility = 'hidden';
+  }
+  fullText = it.text;
+  const txt = $('#text');
+  txt.innerHTML = '';
+  $('#cont').classList.remove('on');
+  typing = true;
+  let i = 0;
+  const arr = [...fullText];
+  clearInterval(typeTimer);
+  typeTimer = setInterval(() => {
+    i++;
+    txt.textContent = arr.slice(0, i).join('');
+    if (i >= arr.length){ finishType(); }
+  }, 22);
+}
+function finishType(){
+  clearInterval(typeTimer);
+  typing = false;
+  $('#text').innerHTML = fullText;   /* 亮 HTML 标记 */
+  $('#cont').classList.add('on');
+}
+$('#text').addEventListener('click', () => advanceClick());
+function advanceClick(){
+  if (typing){ finishType(); return; }
+  const it = SC.script[idx];
+  if (it && it.t === 'say'){ idx++; step(); }
+}
+
+/* ---- 面板 ---- */
+function showPanel(title, html, onCont, after){
+  const w = $('#panelwrap'), p = $('#panel');
+  p.innerHTML = `<h3>${title}</h3>${html}<button class="pxbtn gold" id="pcont">WEITER · 继续</button>`;
+  w.classList.add('on');
+  $('#pcont').onclick = () => { closePanel(); onCont && onCont(); };
+  after && after(p);
+}
+function closePanel(){ $('#panelwrap').classList.remove('on'); }
+
+/* ---- 文档流面板（复盘等长内容，页面自然滚动） ---- */
+function showFlow(title, html){
+  clearFlow();
+  const div = document.createElement('div');
+  div.id = 'flowbox';
+  div.innerHTML = `<h3>${title}</h3>${html}`;
+  $('#app').appendChild(div);
+  setTimeout(() => { div.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function clearFlow(){ const f = document.getElementById('flowbox'); if (f) f.remove(); }
+
+/* ---- 选项：两段式确认（点一下＝选中，再点＝执行，可撤销） ---- */
+let __armBtn = null;
+function clearArm(){
+  if (__armBtn){ __armBtn.classList.remove('armed'); __armBtn = null; }
+  const h = document.getElementById('armhint');
+  if (h) h.classList.remove('on');
+}
+function armConfirm(btn, onConfirm, labelEl){
+  if (!btn) return;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (btn.classList.contains('armed')){ clearArm(); onConfirm(); return; }
+    clearArm();
+    __armBtn = btn;
+    btn.classList.add('armed');
+    const h = document.getElementById('armhint');
+    if (h){
+      const lb = (labelEl && labelEl.textContent) || (btn.querySelector('.ol') ? btn.querySelector('.ol').textContent : '');
+      h.querySelector('span').textContent = '再点一次【' + String(lb).trim() + '】执行 · 点 ✕ 或其他选项可撤销';
+      h.classList.add('on');
+    }
+  });
+}
+function showChoices(opts, onPick){
+  $('#cont').classList.remove('on');
+  clearArm();
+  const box = $('#choices');
+  box.innerHTML = `<div id="armhint"><span>再点一次执行 · 点 ✕ 撤销</span><button id="armcancel" type="button">✕ 撤销</button></div>` +
+    opts.map((o,i) =>
+    `<button class="pxopt ${o.primary ? 'primary' : ''}" data-i="${i}" type="button">
+       <span class="ol">${o.label}</span>
+       ${o.sub ? `<span class="os">${o.sub}</span>` : ''}
+     </button>`).join('');
+  const cx = document.getElementById('armcancel');
+  if (cx) cx.onclick = (e) => { e.stopPropagation(); clearArm(); };
+  box.querySelectorAll('.pxopt').forEach(b => {
+    armConfirm(b, () => {
+      const o = opts[+b.dataset.i];
+      o.fn && o.fn();
+      hud();
+      if (checkVitals()) return;
+      onPick && onPick(o);
+      clearArm();
+      if (!onPick || !onPick.stay){ box.innerHTML = ''; idx++; step(); }
+    });
+  });
+}
+
+/* ---- 多选（危机：选 2 项，同样两段式确认） ---- */
+function showMulti(it){
+  $('#cont').classList.remove('on');
+  clearArm();
+  const box = $('#choices');
+  const render = () => {
+    box.innerHTML = `<div id="armhint"><span>再点一次执行 · 点 ✕ 撤销</span><button id="armcancel" type="button">✕ 撤销</button></div>` +
+      it.opts.map((o,i) => {
+        const used = S.crisisPicks.includes(o.id);
+        const full = S.crisisPicks.length >= 2;
+        return `<button class="pxopt ${used ? 'picked' : ''}" data-i="${i}" type="button" ${used || full ? 'disabled' : ''}>
+          <span class="ol">${used ? '✓ ' : ''}${o.label}</span>
+          <span class="os">${o.sub}</span>
+        </button>`;
+      }).join('') +
+      `<button class="pxopt primary" id="enter" type="button">${it.enterLabel}</button>`;
+    const cx = box.querySelector('#armcancel');
+    if (cx) cx.onclick = (e) => { e.stopPropagation(); clearArm(); };
+    box.querySelectorAll('.pxopt[data-i]').forEach(b => {
+      armConfirm(b, () => {
+        const o = it.opts[+b.dataset.i];
+        o.fn(); S.crisisPicks.push(o.id); hud();
+        if (checkVitals()) return;
+        render();
+      });
+    });
+    armConfirm(box.querySelector('#enter'), () => {
+      box.innerHTML = '';
+      it.enter(); hud();
+      if (checkVitals()) return;
+      idx++; step();
+    });
+  };
+  render();
+}
+
+/* ---- 转场：在路上（主角走路动画） ---- */
+function transit(label, to){
+  $('#tlabel').textContent = label;
+  const wk = document.getElementById('walker');
+  if (wk){ wk.innerHTML = SPRITES.youbody; wk.style.display = 'block'; }
+  $('#transit').classList.add('on');
+  $('#text').innerHTML = '';
+  $('#cont').classList.remove('on');
+  $('#choices').innerHTML = '';
+  setTimeout(() => {
+    $('#transit').classList.remove('on');
+    if (wk) wk.style.display = 'none';
+    go(to);
+  }, 1500);
+}
+
+/* =========================================================
+   小游戏
+   ========================================================= */
+const GAMES = {};
+
+/* --- 条款阅读 --- */
+GAMES.clauses = (it) => {
+  const CL = [
+    { real: 1, de: '§ 12 (2) &nbsp;Eine nicht bestandene Modulprüfung kann <b>zweimal wiederholt</b> werden.',
+      cn: '未通过的模块考试可补考两次——总共三次机会。' },
+    { real: 1, de: '§ 12 (5) &nbsp;Nach dem dritten erfolglosen Versuch: <b>endgültig nicht bestanden</b>. Der Prüfungsanspruch erlischt – auch an anderen Hochschulen in Deutschland.',
+      cn: '第三次未过＝「最终不及格」：考试资格消灭，全德同专业受限。' },
+    { real: 1, de: '§ 17 (1) &nbsp;Der <b>Freiversuch</b> gilt nur für bestimmte Module, erstmals innerhalb der Regelstudienzeit.',
+      cn: '「自由尝试」只限指定模块＋标准年限内首考——不是所有课都有。' },
+    { real: 1, de: '§ 18 (3) &nbsp;Auf <b>schriftlichen Antrag</b> kann die Prüfungsfrist aus wichtigem Grund verlängert werden.',
+      cn: '重要原因可书面申请延期，理由须「可信地证明」。' },
+    { real: 1, de: '§ 21 (3) &nbsp;Der eingereichte Titel muss mit dem eingetragenen Titel <b>wortgleich</b> übereinstimmen.',
+      cn: '论文题目必须与登记表逐字一致；改题须申请＋委员会批准。' },
+    { real: 0, de: '„Bei Krankheit genügt eine E-Mail an die Dozentin; die Prüfung gilt dann als nicht abgelegt."',
+      cn: '论坛原帖：「生病给老师发个邮件就行，考试算没考。」',
+      tip: '这不是规章。未经委员会认可的缺席＝「已参加且未通过」（§ 18 Abs. 2）。' }
+  ];
+  let marked = 0, fakeSeen = false;
+  const w = $('#panelwrap'), p = $('#panel');
+  const body = () => `
+    <p style="margin-bottom:8px">点开其中 <b>3 条</b>真实条款，勾选框才会解锁（<b>再点一次已勾选的条款＝取消勾选</b>）。有一段是论坛「经验」——点它不会算数。</p>
+    <div id="clgrid">${CL.map((c,i) => `
+      <div class="clause ${c.marked ? 'marked' : ''} ${c.wrong ? 'wrongpick' : ''}" data-i="${i}" data-real="${c.real}">
+        <div class="de">${c.de}</div>
+        <div class="cn">${c.cn}</div>
+        ${c.tip ? `<div class="tip"><b>批注：</b>${c.tip}</div>` : ''}
+      </div>`).join('')}</div>
+    <button class="pxbtn" id="confirm" ${marked >= 3 ? '' : 'disabled'} style="margin-top:10px">
+      ${marked >= 3 ? '☑ 我已阅读并知晓考试条例 · WEITER' : `还需阅读 ${3 - marked} 条条款`}
+    </button>`;
+  p.innerHTML = `<h3>PRÜFUNGSORDNUNG · 考试条例节选</h3><div id="clbody"></div>`;
+  w.classList.add('on');
+  const clb = p.querySelector('#clbody');
+  const paint = () => { clb.innerHTML = body(); bind(); };
+  function bind(){
+    clb.querySelectorAll('.clause').forEach(el => {
+      el.onclick = () => {
+        const c = CL[+el.dataset.i];
+        if (!c.real){ c.wrong = true; fakeSeen = true; paint(); return; }
+        if (c.marked){ c.marked = false; marked--; paint(); return; }   /* 再点＝取消勾选 */
+        c.marked = true; marked++;
+        paint();
+      };
+    });
+    const cf = clb.querySelector('#confirm');
+    if (cf && !cf.disabled) cf.onclick = () => {
+      closePanel();
+      if (marked >= 3) S.wissen = Math.max(S.wissen, 1) + 1;
+      collectCard('dreimal');
+      collectCard('final');
+      if (fakeSeen) collectCard('freiversuch');
+      S.log.push('注册前读了考试条例');
+      idx++; step();
+    };
+  }
+  paint();
+};
+
+/* --- 找房：连发求租 --- */
+const PING_MSGS = [
+  'An: #1143 · Hallo! Ich heiße Xiao, studiere Maschinenbau …',
+  'An: #1187 · Sehr geehrte Damen und Herren, ich würde …',
+  'An: FB-Gruppe · Hallo zusammen! Ich bin ruhig, koche gern …',
+  'An: #1202 · Gelesen ✓ Keine Antwort.',
+  'An: #1231 · Auch wenn das Zimmer vergeben ist, danke …',
+  'An: FB-Gruppe · Ich kann sofort einziehen, Kaution bar …',
+  'An: #1288 · Gelesen ✓ Keine Antwort.'
+];
+GAMES.pings = (it) => {
+  const w = $('#panelwrap'), p = $('#panel');
+  const paint = () => {
+    const done = S.pings >= 8;
+    p.innerHTML = `<h3>WG-GEsuchT · 求租信箱 <span>已发出 ${S.pings} / 8</span></h3>
+      <div class="pinglog">
+        ${S.pings === 0 ? '<div>› Warteliste Studierendenwerk · 2–3 Semester</div><div>› 已浏览 43 条广告 · 0 条回复</div><div>还没有发出任何消息。</div>'
+          : PING_MSGS.slice(0, Math.min(S.pings, 7)).slice(-4).map(m => `<div>${m}</div>`).join('')}
+        ${done ? '<div class="hit">→ CLARA · 1 ANTWORT：「Casting morgen 19:00. Bring deinen Humor mit.」</div>' : ''}
+      </div>
+      ${done ? `<p style="margin-bottom:6px">八条消息，一个回复。这不是生活问题——这是<b>入学流程的一部分</b>。</p><button class="pxbtn gold" id="pcont">WEITER · 去面试</button>`
+             : `<button class="pxbtn" id="ping">再写一条求租消息 · KRAFT −1</button>`}`;
+    w.classList.add('on');
+    const pb = p.querySelector('#ping');
+    if (pb) pb.onclick = () => { S.pings++; pay(0,-1); hud(); paint(); };
+    const pc = p.querySelector('#pcont');
+    if (pc) pc.onclick = () => { closePanel(); collectCard('wohnung'); idx++; step(); };
+  };
+  paint();
+};
+
+/* --- 论文题目：逐字核对 --- */
+GAMES.thesis = (it) => {
+  const d1 = S.adresse ? 2 : 3, d2 = S.adresse ? 4 : 5;
+  const w = $('#panelwrap'), p = $('#panel');
+  p.innerHTML = `<h3>ANMELDUNG DER ABSCHLUSSARBEIT · 请核对登记表</h3>
+    <p style="margin-bottom:6px">你装订好的三本论文，封面上印的是：</p>
+    <div style="background:#1A2220;border:2px solid #101815;padding:9px 12px;font-family:var(--mono);font-size:12px;color:#F1F6F2;margin-bottom:12px">
+      Untersuchung der Strömungs<span style="color:#FFC99B">mechanik</span> im Modellversuch
+    </div>
+    <p style="margin-bottom:6px">秘书处系统里的登记表（<b>点出被填错的那一栏</b>）：</p>
+    <div class="formfield" data-k="nr"><span class="fk">Matrikelnummer</span><span class="fv">24 371 908</span></div>
+    <div class="formfield" data-k="titel"><span class="fk">Titel · eingetragen</span><span class="fv">Untersuchung der Strömungs<span style="color:#C0503E">maschinen</span> im Modellversuch</span></div>
+    <div class="formfield" data-k="gut"><span class="fk">Erstgutachter</span><span class="fv">Prof. Dr. Krämer</span></div>
+    <div class="formfield" data-k="dat"><span class="fk">Abgabedatum</span><span class="fv">14. März · bestätigt</span></div>
+    <p id="fnote" style="font-size:11.5px;color:#8FA6A0;min-height:18px"></p>`;
+  w.classList.add('on');
+  p.querySelectorAll('.formfield').forEach(f => {
+    f.onclick = () => {
+      if (p.dataset.done) return;
+      if (f.dataset.k !== 'titel'){
+        f.classList.add('wrongpick');
+        p.querySelector('#fnote').textContent = '这一栏没问题。把论文封面和系统登记表逐字对照一遍。';
+        return;
+      }
+      p.dataset.done = '1';
+      f.classList.remove('wrongpick');
+      f.classList.add('rightpick');
+      p.querySelector('#fnote').innerHTML = `找到了：秘书把 <b>Strömungsmechanik</b> 抄成了 <b>Strömungsmaschinen</b>——差一个词。<br>§ 21 (3) 要求逐字一致：一张表、三个签字、下一轮委员会。`;
+      const opts = [
+        { l: `当天写申请，三个签字自己跑`, s: `答辩顺延 ${d1} 个月 · GELD −1.600 · KRAFT −8`,
+          f: () => { S.thesisFixed = true; S.delay = d1; pay(-1600,-8); S.sem += 1; S.log.push(`当场发现题目错误，答辩顺延 ${d1} 个月`); hud(); } },
+        { l: `先按原样交上去，等 Prüfungsamt 退回`, s: `答辩顺延 ${d2} 个月 · GELD −2.800 · KRAFT −4`,
+          f: () => { S.delay = d2; pay(-2800,-4); S.sem += 1; S.log.push(`未核对题目被退回，答辩顺延 ${d2} 个月`); hud(); } }
+      ];
+      const dv = document.createElement('div');
+      dv.style.marginTop = '10px';
+      dv.innerHTML = opts.map((o,i) =>
+        `<button class="pxbtn ${i === 0 ? 'gold' : ''}" data-i="${i}" style="display:block;width:100%;margin:6px 0 0;font-family:var(--sans);font-size:12px;letter-spacing:0">
+           <b style="font-family:var(--sans)">${o.l}</b><br><span style="font-family:var(--mono);font-size:9.5px;opacity:.85">${o.s}</span>
+         </button>`).join('');
+      p.appendChild(dv);
+      dv.querySelectorAll('.pxbtn').forEach(b => armConfirm(b, () => {
+        opts[+b.dataset.i].f();
+        collectCard('titel');
+        clearArm();
+        closePanel();
+        if (checkVitals()) return;
+        idx++; step();
+      }, b.querySelector('b')));
+    };
+  });
+};
+
+/* --- 房间：第一晚（点击物品交互；只有拆信推进剧情） --- */
+GAMES.room = (it) => {
+  const stage = $('#stage');
+  const hots = document.getElementById('hots');
+  hots.innerHTML = '';
+  hots.style.display = 'block';
+  let over = document.getElementById('youover');
+  if (!over){ over = document.createElement('div'); over.id = 'youover'; stage.appendChild(over); }
+  let zzz = document.getElementById('zzz');
+  if (!zzz){ zzz = document.createElement('div'); zzz.id = 'zzz'; zzz.textContent = 'Z z z …'; stage.appendChild(zzz); }
+  over.style.display = 'none';
+  zzz.style.display = 'none';
+  const say = (html) => {
+    const whoEl = $('#who');
+    whoEl.textContent = '你 · ZIMMER'; whoEl.className = 'on';
+    $('#portbox').innerHTML = SPRITES.you; $('#portbox').style.visibility = 'visible';
+    $('#text').innerHTML = html;
+    $('#cont').classList.remove('on');
+  };
+  const used = {};
+  const OBJ = [
+    { id:'bed', x:1, y:46, w:32, h:36, t:'BETT · 躺一会儿', act(){
+      over.innerHTML = SPRITES.youbody;
+      over.style.left = '6%'; over.style.top = '58%'; over.style.display = 'block';
+      zzz.style.left = '23%'; zzz.style.top = '48%'; zzz.style.display = 'block';
+      pay(0,8); hud();
+      say('你躺了上去。弹簧塌了一半，但这是<b>你的床</b>——来德国两个月，第一件真正属于你的东西。<span style="color:var(--teal-2)">KRAFT +8</span>');
+    } },
+    { id:'sofa', x:66, y:52, w:29, h:28, t:'SOFA · 看会儿电视', act(){
+      over.innerHTML = SPRITES.youbody;
+      over.style.left = '73%'; over.style.top = '60%'; over.style.display = 'block';
+      pay(0,6); hud();
+      say('周日晚，全德国都在看《Tatort》。你也看了半小时——顺便把明天要背的词汇卡摊在腿上。<span style="color:var(--teal-2)">KRAFT +6</span>');
+    } },
+    { id:'box', x:4, y:21, w:12, h:28, t:'KARTONS · 拆纸箱', act(){
+      pay(0,3); hud();
+      say('箱底翻出：两包泡面、一床电热毯，还有妈妈塞进来的一包枸杞。<span style="color:var(--teal-2)">KRAFT +3</span>');
+    } },
+    { id:'win', x:36, y:6, w:27, h:36, t:'FENSTER · 看看窗外', act(){
+      say('楼下人行道上堆着邻居的 Sperrmüll（大件垃圾）。在德国，扔一张旧沙发也要和市政厅<b>预约日期</b>——万物皆须 Termin。');
+    } },
+    { id:'desk', x:37, y:50, w:24, h:33, t:'SCHREIBTISCH · 拆那封信', plot: true, act(){
+      const letters = S.adresse
+        ? [ { t:'say', who:'mail', text:'Bürgeramt（市民服务处）：Ihre Anmeldung ist erfolgt —— 住址登记完成，已进入官方系统。' },
+            { t:'say', who:'you', text:'从今天起，Prüfungsamt 的信会寄到<b>这里</b>，而不是漂在青旅前台。你把确认单压在台灯下。<span style="color:var(--teal-2)">WISSEN +1</span>' } ]
+        : [ { t:'say', who:'mail', text:'一封被退回的信：寄往旧地址的市政厅信件「nicht zustellbar · 无法送达」。' },
+            { t:'say', who:'you', text:'没有 Anmeldung，官方信件一直在追着你跑。你把它也压在了台灯下——这件事还没完。' } ];
+      SC.script.splice(idx + 1, 0, ...letters);
+      if (S.adresse){ S.wissen++; hud(); }
+      cleanupStage();
+      idx++; step();
+    } }
+  ];
+  OBJ.forEach(o => {
+    const d = document.createElement('div');
+    d.className = 'hs' + (o.plot ? ' plot hintpulse' : '');
+    d.style.left = o.x + '%'; d.style.top = o.y + '%';
+    d.style.width = o.w + '%'; d.style.height = o.h + '%';
+    d.innerHTML = `<span class="hst">${o.t}</span>`;
+    d.onclick = (e) => {
+      e.stopPropagation();
+      if (o.plot){ o.act(); return; }
+      if (used[o.id]) return;
+      used[o.id] = true;
+      d.classList.add('used');
+      o.act();
+      if (Object.keys(used).length >= 4) setTimeout(() => {
+        if (hots.children.length) say('房间里值得做的事都做完了。<b>书桌上那封金边的信还在闪。</b>');
+      }, 2000);
+    };
+    hots.appendChild(d);
+  });
+  say('点房间里的东西试试——床、沙发、纸箱、窗户都行。<b>今晚必须拆的，是书桌上那封在闪的信。</b>');
+};
+
+/* =========================================================
+   剧本
+   ========================================================= */
+const SCENES = {};
+
+/* ---------- 开始 ---------- */
+SCENES.start = () => ({
+  bg: BG.road,
+  ch: 'PROLOG',
+  script: []
+});
+
+/* ---------- CH1 语言 ---------- */
+SCENES.sprache = () => ({
+  bg: BG.langcenter,
+  ch: 'KAP. 1 · SPRACHE',
+  script: [
+    { t:'say', who:'sys', text:'8 月 · Sprachzentrum（语言中心）门口 · 07:40。队伍已经排到了街角。' },
+    { t:'say', who:'you', text:'录取通知书上写的是「条件录取」。条件是四个字母：<em>DSH</em>。' },
+    { t:'say', who:'you', text:'你还不是大学生。你只是一个「有资格去考语言考试的人」。' },
+    { t:'panel', title:'DSH · ANMELDEPORTAL <span>报名系统</span>', html: `
+      <div class="sysbig">Deutsche Sprachprüfung für den Hochschulzugang</div>
+      <div class="sysrow"><span>考期（每年）</span><b>2 次 · 排在学期开始前</b></div>
+      <div class="sysrow"><span>报名门槛</span><b>C1 证书</b></div>
+      <div class="sysrow"><span>考试构成</span><b>笔试（约 4 小时）+ 口试</b></div>
+      <div class="sysrow"><span>通过线（多数专业）</span><b><em>DSH-2 ≥ 67 %</em></b></div>
+      <div class="sysrow"><span>费用</span><b>150,00 €</b></div>
+      <div class="syswarn">⤷ 下一次考期在 4 个月后。未通过 = 不能注册 = 入学顺延 1 学期。笔试、口试两部分都必须通过；医学、法学常要求 DSH-3。</div>
+      <p style="margin-top:10px">别把 DSH 和后面的「三次机会」搞混：课程考试次数由各校 Prüfungsordnung 规定；DSH 全国框架不设统一重考上限，次数由各校自定（如锡根大学 §9 写明可重考两次）。真正卡人的，是<b>一年两次的窗口</b>。</p>
+      <span class="src">dsh.de 官方 FAQ；Uni Siegen DSH-Ordnung §9</span>` },
+    { t:'card', id:'dsh' },
+    { t:'say', who:'you', text:'语言不是开学就结束的一关。它排在学期前面——是另一条时间线。' },
+    { t:'choice', opts: [
+      { label:'报冲刺班，四个月只做这一件事', sub:'GELD −900 · KRAFT −18 · WISSEN +1 · 准备度 +4',
+        fn:() => { pay(-900,-18); S.sprache = 2; S.wissen++; S.prep += 4; S.log.push('DSH 冲刺班，一次通过'); } },
+      { label:'白天理货，晚上自学，省钱', sub:'KRAFT −26 · 准备度 +2 · 压线拿到 DSH-2',
+        fn:() => { pay(0,-26); S.sprache = 1; S.prep += 2; S.log.push('半工半读备考，压线通过 DSH'); } },
+      { label:'先裸考一次，摸个底再补', sub:'GELD −150 · 二战才过 · 入学顺延 1 学期 · 准备度 −4',
+        fn:() => { pay(-150,-8); S.sprache = 1; S.extraSem = 1; S.sem = 2; S.prep -= 4; S.log.push('DSH 首考未过，注册顺延一学期'); } }
+    ]},
+    { t:'transit', label:'→ KAP. 2 · IMMATRIKULATION', to:'mail' }
+  ]
+});
+
+/* ---------- CH2 注册 ---------- */
+SCENES.mail = () => ({
+  bg: BG.desk,
+  ch: 'KAP. 2 · IMMATRIKULATION',
+  night: true,
+  script: [
+    { t:'say', who:'mail', text:'【KIT 注册确认 · WS 2025/26】Li, Xiao，你已被录取：Maschinenbau B.Sc.（机械工程本科）。' },
+    { t:'say', who:'mail', text:'费用：Semesterbeitrag（学期费）298,70 € + Studiengebühren（非欧盟学费）1.500,00 €。合计 <em>1.798,70 € / 学期</em>。' },
+    { t:'say', who:'mom', text:'「你爸跟同事说，德国的大学不要学费，可给你省了大钱。」' },
+    { t:'say', who:'you', text:'「嗯……基本不要。」（巴登-符腾堡州，非欧盟学生，每学期 1.500 €。）' },
+    { t:'card', id:'gebuehren' },
+    { t:'say', who:'mail', text:'邮件最后一句：Bitte lesen Sie diese sorgfältig——请仔细阅读考试条例。你跳过去了。' },
+    { t:'say', who:'sys', text:'还有一件事没有人提醒你：注册不包住宿。离开学三周，你还没有地址。' },
+    { t:'choice', opts: [
+      { label:'今晚把 Prüfungsordnung 读完', sub:'24 页，德语，全是 § · KRAFT −5 · WISSEN +1',
+        fn:() => { pay(0,-5); S.wissen++; S.log.push('注册当晚读了考试条例'); } },
+      { label:'先去交钱、办保险、找房子', sub:'现实先来 · GELD −2.000 · KRAFT −10',
+        fn:() => { pay(-2000,-10); S.log.push('先办现实手续'); } },
+      { label:'问学长：到底难不难？', sub:'KAI 会给你一句「还行吧」 · KRAFT +5',
+        fn:() => { pay(0,5); S.log.push('问了学长，得到「还行吧」'); } }
+    ]},
+    { t:'transit', label:'→ KAP. 3 · WOHNUNG', to:'wohnung' }
+  ]
+});
+
+/* ---------- CH3 找房 ---------- */
+SCENES.wohnung = () => ({
+  bg: BG.wghouse,
+  ch: 'KAP. 3 · WOHNUNG',
+  script: [
+    { t:'say', who:'sys', text:'开学前 3 周 · 青年旅舍 · 23:10。Studierendenwerk（大学生服务中心）的回信只有一行：' },
+    { t:'say', who:'mail', text:'「Warteliste · voraussichtlich 2–3 Semester。」——等候名单，预计 2 到 3 个学期。' },
+    { t:'say', who:'you', text:'于是你开始「舔」：给每一条 WG 广告写一段礼貌到卑微的德语。一条广告，通常有上百人这么写。' },
+    { t:'game', kind:'pings' },
+    { t:'say', who:'clara', text:'「Casting morgen 19:00. Bring deinen Humor mit.」——明晚七点来合租面试，带上你的幽默感。' },
+    { t:'choice', opts: [
+      { label:'去 Clara 的 WG-Casting，签正规合同', sub:'GELD −1.200 · KRAFT −8 · 可办 Anmeldung（住址登记）',
+        fn:() => { pay(-1200,-8); S.adresse = 1; S.log.push('WG-Casting 通过，完成 Anmeldung'); } },
+      { label:'接城郊短租（Zwischenmiete）', sub:'GELD −600 · KRAFT −12 · 准备度 −3 · 房东不给登记',
+        fn:() => { pay(-600,-12); S.prep -= 3; S.log.push('短租，没办成 Anmeldung'); } },
+      { label:'继续住青旅，等 Studierendenwerk', sub:'GELD −1.000 · KRAFT −18 · 准备度 −6 · 地址仍是临时的',
+        fn:() => { pay(-1000,-18); S.prep -= 6; S.log.push('住青旅等宿舍，地址不稳定'); } }
+    ]},
+    { t:'transit', label:'→ KAP. 3 · ZIMMER · 第一晚', to:'room' }
+  ]
+});
+
+/* ---------- CH3+ 搬进来的第一晚（房间交互） ---------- */
+SCENES.room = () => ({
+  bg: BG.room,
+  ch: 'KAP. 3 · ZIMMER',
+  night: true,
+  script: [
+    { t:'say', who:'sys', text:'搬进来的第一晚。12 平方米，月租 430 €。墙上还留着上一个房客的海报。' },
+    { t:'say', who:'you', text:'从今晚起，这里是你在德国的唯一坐标。房间里的东西随你折腾——<b>但书桌上那封金边的信，今晚必须拆</b>。' },
+    { t:'game', kind:'room' },
+    { t:'transit', label:'→ KAP. 4 · ORDNUNG', to:'po' }
+  ]
+});
+
+/* ---------- CH4 条款 ---------- */
+SCENES.po = () => ({
+  bg: BG.library,
+  ch: 'KAP. 4 · ORDNUNG',
+  night: true,
+  script: [
+    { t:'say', who:'sys', text:'注册流程的最后一页只有一个复选框：「Ich habe die Prüfungsordnung zur Kenntnis genommen.」（我已阅读并知晓考试条例。）' },
+    { t:'say', who:'sys', text:'系统要求你先打开其中 3 条与你有关的条款。不点，就签不下去。' },
+    { t:'game', kind:'clauses' },
+    { t:'say', who:'you', text:'你刚做了一件大多数留学生不做的事：读规章。' },
+    { t:'say', who:'you', text:'德国大学的「难」，第一层不是学术难度，是<em>信息不对称</em>——规则写在条款里，不写在通知里。' },
+    { t:'transit', label:'→ KAP. 5 · KLAUSUR', to:'exam1' }
+  ]
+});
+
+/* ---------- CH5 第一学期 ---------- */
+SCENES.exam1 = () => ({
+  bg: BG.lecture,
+  ch: 'KAP. 5 · KLAUSUR',
+  script: [
+    { t:'say', who:'sys', text:'冬季学期第十四周 · 22:47 · 图书馆三层。Thermodynamik I 的习题课讲义还剩 40 页。' },
+    { t:'say', who:'you', text:'Strömungslehre 的板书像另一种语言——严格说，它就是另一种语言。' },
+    { t:'say', who:'bauer', text:'„Die Klausur findet am 9. Februar statt. Wer sie nicht besteht, hat noch zwei Wiederholungsversuche."——考试日期、两次补考，教授每学期都讲。至于第三次之后的事，他只耸耸肩：„Danach… fragen Sie bitte das Prüfungsamt."（之后，请去问考试办公室。）' },
+    { t:'say', who:'mom', text:'「钱够不够？不够就说。」' },
+    { t:'say', who:'you', text:'「够。」你把手机翻了过去。Klausur（闭卷考试）在 2 月 9 日，还有 6 周。' },
+    { t:'say', who:'you', text:'这 6 周怎么用，只由你决定——但每一种用法，都要从别的地方扣。' },
+    { t:'choice', opts: [
+      { label:'全部押上：每天 10 小时，闭馆才走', sub:'KRAFT −30 · 准备度 +18',
+        fn:() => { pay(0,-30); S.prep += 18; S.log.push('第一学期全力复习'); } },
+      { label:'每周打工 20 小时（Minijob）', sub:'GELD +1.350 · KRAFT −30 · 准备度 +6',
+        fn:() => { pay(1350,-30); S.prep += 6; S.log.push('第一学期打工优先'); } },
+      { label:'找王蕊要 Altklausuren（历年真题）', sub:'KRAFT −12 · 准备度 +12',
+        fn:() => { pay(0,-12); S.prep += 12; S.log.push('第一学期刷旧题'); } }
+    ]},
+    { t:'transit', label:'→ NOTENAUSZUG · 成绩', to:'result1' }
+  ]
+});
+
+/* ---------- 成绩与补考 ---------- */
+SCENES.result1 = () => {
+  const pass = S.prep >= 46;
+  S.att = 1;
+  S.ects += pass ? 30 : 22;
+  const script = [
+    { t:'panel', title:'NOTENAUSZUG · 成绩单 <span>Thermodynamik I · 8 ECTS</span>', html: `
+      <div class="pstamp" style="color:${pass ? '#4E9A92' : 'var(--red)'}">${pass ? 'BESTANDEN' : 'NICHT BESTANDEN'}</div>
+      <p style="font-family:var(--mono);font-size:26px;color:#FFF;margin-bottom:6px">Note ${pass ? '3,3' : '5,0'}</p>
+      <p>${pass ? '通过。系统只更新了一行数字，没有人恭喜你。' : '未通过。你没有收到任何通知——成绩在系统里，需要你自己去查。'}</p>` }
+  ];
+  if (pass){
+    script.push(
+      { t:'say', who:'sys', text:'第二天早上，课表照旧，下一门课已经开始讲第 3 章。' },
+      { t:'say', who:'you', text:'你意识到：你之所以通过，是因为把整个冬天押在了一门课上。而这学期，你有四门。' }
+    );
+  } else {
+    script.push(
+      { t:'say', who:'sys', text:'补考要自己报名——Anmeldung 截止 2 月 14 日。你是在 2 月 20 日想起来的。' },
+      { t:'card', id:'anmeldung2' },
+      { t:'say', who:'you', text:'很多德国高校不会提醒你报名补考。错过报名期，等于浪费一次尝试。' }
+    );
+  }
+  script.push(
+    { t:'say', who:'sys', text:'也是在这一年：Strömungslehre II 的第二次尝试——5,0。' },
+    { t:'panel', title:'BESCHEID · 行政裁定 <span>Prüfungsamt</span>', html: `
+      <p style="font-family:var(--mono);font-size:12px;color:#AFC5BC">Sie haben die Modulprüfung nicht bestanden.</p>
+      <p style="font-family:var(--mono);font-size:15px;color:#FFF">Es verbleibt <b style="color:#FFC99B">ein weiterer Versuch</b>.</p>
+      <p style="font-size:11.5px;color:#8FA6A0">（您还有一次机会。异议须在一个月内提出，且只能针对程序，不能针对分数。）</p>` },
+    { t:'say', who:'you', text:'还剩一次。' },
+    { t:'fn', fn:() => { S.sem = 3; S.att = 2; pay(-4200,-8); } },
+    { t:'transit', label:'→ KAP. 6 · EIN VERSUCH', to:'crisis' }
+  );
+  return { bg: BG.board, ch: 'KAP. 5 · NOTEN', script };
+};
+
+/* ---------- CH6 危机 ---------- */
+SCENES.crisis = () => {
+  const script = [
+    { t:'say', who:'sys', text:'第 3 学期 · 2 月 · 宿舍。桌上摊着三样东西：一张缴费单、一封 Bescheid、一份你从没打开过的 PDF。' },
+    { t:'say', who:'sys', text:`银行余额 ${eur(S.geld)}。距离 Drittversuch（第三次尝试）还有 6 周。住址：${S.adresse ? '已登记，信件收得到。' : '仍是临时的——Prüfungsamt 的信可能寄丢。'}` },
+    { t:'say', who:'you', text:'德国的「弹性」不是自动生效的：它是一份需要你主动提交的<em> Antrag（申请书）</em>。' },
+    { t:'card', id:'flex' },
+    { t:'say', who:'you', text:'时间、钱、精力——只够选两样。' },
+    { t:'multi', enterLabel:'走进考场 · DRITTVERSUCH（不可撤销）', opts: [
+      { id:'beratung', label:'预约学业咨询（Herr Krämer）', sub:'免费 · WISSEN +2 · KRAFT −5',
+        fn:() => { S.wissen += 2; pay(0,-5); S.log.push('找了学业咨询'); } },
+      { id:'sprachkurs', label:'去 Sprachzentrum 补学术德语写作', sub:'免费 · KRAFT −12 · 准备度 +8 · WISSEN +1',
+        fn:() => { S.wissen += 1; pay(0,-12); S.prep += 8; S.log.push('补了学术德语写作'); } },
+      { id:'arbeit', label:'暑假不休息，去工厂打工', sub:'GELD +2.400 · KRAFT −25 · 准备度 +4',
+        fn:() => { pay(2400,-25); S.prep += 4; S.log.push('为钱打工'); } },
+      { id:'urlaub', label:'申请 Urlaubssemester（休学一学期）', sub:'学期 +1 · GELD −2.800 · KRAFT +25 · 准备度 +8',
+        fn:() => { S.sem += 1; S.leave++; pay(-2800,25); S.prep += 8; S.log.push('休学一学期'); } },
+      { id:'hart', label:'把 6 周全部投入，硬扛', sub:'KRAFT −25 · 准备度 +18',
+        fn:() => { pay(0,-25); S.prep += 18; S.log.push('硬扛第三次'); } },
+      { id:'mom', label:'给妈妈打电话，说清楚', sub:'GELD +3.000 · KRAFT +4 · 准备度 +4',
+        fn:() => { pay(3000,4); S.prep += 4; S.toldMom = true; S.log.push('向家里求助'); } }
+    ], enter:() => {
+        S.prep += S.wissen * 4;
+        pay(-4200, -10);
+        S.sem = 7 + S.leave + S.extraSem;
+        S.ects = S.prep >= 62 ? 180 : 172;
+        S.att = 3;
+      } },
+    { t:'transit', label:'→ KAP. 7 · DRITTVERSUCH', to:'dritt' }
+  ];
+  return { bg: BG.street, ch: 'KAP. 6 · EIN VERSUCH', night: true, rain: true, flash: true, script };
+};
+
+/* ---------- CH7 第三次 ---------- */
+SCENES.dritt = () => {
+  const p = Math.min(100, Math.round(S.prep));
+  return {
+    bg: BG.examhall,
+    ch: 'KAP. 7 · DRITTVERSUCH',
+    script: [
+      { t:'say', who:'sys', text:'考场 · 座位 17 · 09:00。桌上只有答题纸、一支笔，和一张纸：Hilfsmittel: nicht zugelassen（不得使用任何辅助工具）。' },
+      { t:'say', who:'you', text:'监考人核对证件时看了你一眼。这是你第三次坐在这张桌子前。' },
+      { t:'panel', title:'VORBEREITUNG · 准备度 <span>' + p + ' / 100</span>', html: `
+        <div class="gaugebar"><i id="gbar"></i><div class="th" style="left:62%"></div><div class="th2" style="left:76%"></div></div>
+        <p class="gaugenote">红线 = 通过线（62）。金线（76）以上可按时完成；62–75 通过，但需要延期消化；62 以下：endgültig nicht bestanden。<br>准备度由你的复习投入、信息掌握（×4）、精力状态与制度工具共同决定——<b>不靠随机，靠你前面攒了什么</b>。</p>`,
+        after: (panel) => { setTimeout(() => { const b = panel.querySelector('#gbar'); if (b) b.style.width = p + '%'; }, 150); } },
+      { t:'say', who:'you', text:'这门课值 6 个 ECTS。但它真正称量的，是你在<em>这个国家</em>继续读下去的权利。' },
+      { t:'choice', opts: [
+        { label:'交卷 · Klausur abgeben', sub:'结局取决于你的准备度', primary: true,
+          fn:() => { S.ending = p >= 76 ? 'A' : (p >= 62 ? 'B' : 'C'); } }
+      ]},
+      { t:'jump', toFn:() => S.ending === 'C' ? 'endC' : 'thesis' }
+    ]
+  };
+};
+
+/* ---------- CH8 论文题目（反转） ---------- */
+SCENES.thesis = () => ({
+  bg: BG.office,
+  ch: 'KAP. 8 · ABSCHLUSSARBEIT',
+  script: [
+    { t:'say', who:'sys', text:`第 ${S.sem} 学期 · 论文提交后第 3 天。学分齐了，三本论文装订好，答辩定在 4 月 11 日。` },
+    { t:'say', who:'sys', text:S.adresse
+      ? '秘书处寄来一张登记表，请你核对系统里的信息。'
+      : '秘书处的信寄到了你上一个住址，转到手上时已经过了一周。' },
+    { t:'say', who:'you', text:'万事俱备。你连回国的机票都看好了。' },
+    { t:'game', kind:'thesis' },
+    { t:'say', who:'weber', text:'「很抱歉……但题目登记以后就是有约束力的。您需要填一张改题申请表，还需要两位评审和委员会主席的签字。」' },
+    { t:'say', who:'you', text:'秘书把 Strömungsmechanik 抄成了 Strömungsmaschinen。一个词，系统里的一行字。' },
+    { t:'say', who:'sys', text:'你已经考完了，却还要再等两个月才能答辩。弹性延毕最让人无话可说的一种，是<em>你什么都没做错</em>。' },
+    { t:'jump', to: 'end' + S.ending }
+  ]
+});
+
+/* ---------- 归零结局：KRAFT / GELD ---------- */
+function gameoverChoice(){
+  return { t:'choice', opts: [
+    { label:'NOCHMAL · 重新开始这条路', sub:'换一种活法——KRAFT 见底之前，先照顾自己', primary: true,
+      fn:() => setTimeout(reset, 0) },
+    { label:'DENKKARTE · 先看知识导图', sub:'不重玩，直接看德国留学教育体制全景（汇报主体）',
+      fn:() => setTimeout(() => go('map'), 0) }
+  ]};
+}
+SCENES.gameoverK = () => ({
+  bg: BG.hospital, ch: 'GAME OVER',
+  script: [
+    { t:'say', who:'sys', text:`第 ${S.sem} 学期 · Klinikum 急诊室 · 02:11。KRAFT：0 / 100。` },
+    { t:'say', who:'you', text:'醒来时天花板是白的。你在桌前晕倒，救护车开了 11 分钟。诊断：过度劳累。' },
+    { t:'panel', title:'GAME OVER · SPIEL BEENDET <span>KRAFT 耗尽</span>', html: `
+      <div class="pstamp">GAME OVER · KRAFT 0</div>
+      <p>医生开出的不是药，是两周的 <b>Studierverbot（禁止学习令）</b>。这个游戏到此为止——没有「读档」，只有重新开始。</p>
+      <div style="border-left:3px solid var(--teal);padding:8px 12px;margin:10px 0;background:rgba(79,154,146,.1);font-size:12px;line-height:1.8">
+        <b style="color:var(--teal-2)">Aktennotiz · 制度批注：</b><br>
+        德国没有「因病自动延期」。想让期限为你暂停，须在规定期限内（常为考试后 3 个工作日内）提交病假条（ärztliches Attest）并<b>书面申请</b>；昏迷不豁免补考报名截止日。期限不为任何人暂停——它只会过期。
+        <span class="src">各校 Prüfungsordnung §18；Uni Marburg 疾病证明 FAQ</span>
+      </div>
+      <p>KRAFT 是设计出来的抽象资源。现实里它叫<b>健康、时间与语言能力</b>。它归零的方式和游戏里一样：不是一次大错，是一点点被扣完的。</p>
+      <table class="ledger">
+        <tr><td>停在第</td><td>${S.sem} 学期</td></tr>
+        <tr><td>收集的知识卡</td><td>${S.cards.length} / 10</td></tr>
+        <tr><td>余额</td><td>${eur(S.geld)}</td></tr>
+      </table>
+      <p>你没有被「难度」淘汰——你是被「耗尽」筛掉的。那 41% 里的很多人，也是这样离开的。</p>` },
+    gameoverChoice()
+  ]
+});
+
+SCENES.gameoverG = () => ({
+  bg: BG.airport, ch: 'GAME OVER',
+  script: [
+    { t:'say', who:'sys', text:`第 ${S.sem} 学期 · 余额 ${eur(S.geld)}。学期费（Semesterbeitrag）的缴款截止日是上周五。` },
+    { t:'say', who:'sys', text:'没有完成 Rückmeldung（重新注册）→ 学籍注销（Exmatrikulation）。系统邮件用的是被动的语气，像在说天气。' },
+    { t:'panel', title:'GAME OVER · SPIEL BEENDET <span>GELD 见底</span>', html: `
+      <div class="pstamp">GAME OVER · GELD</div>
+      <p>账户深度透支。你算过很多次「再撑一学期就好」——德国的弹性确实可以购买，但<b>你的购买力先见底了</b>。</p>
+      <div style="border-left:3px solid var(--teal);padding:8px 12px;margin:10px 0;background:rgba(79,154,146,.1);font-size:12px;line-height:1.8">
+        <b style="color:var(--teal-2)">Aktennotiz · 制度批注：</b><br>
+        国际学生的签证本就要求约 <b>11.904 € / 年</b>（992 € / 月）的保证金账户（Sperrkonto）；每学期注册前必须缴纳学期费，逾期未缴即注销学籍；德国助学贷 BAföG 原则上不面向国际学生；学生打工有法定天数上限。钱不是留学的外部条件——<b>它是制度的一部分</b>。
+        <span class="src">Sperrkonto 规定（2025 起每月 992 €）；各州高校法注册条款</span>
+      </div>
+      <table class="ledger">
+        <tr><td>停在第</td><td>${S.sem} 学期</td></tr>
+        <tr><td>收集的知识卡</td><td>${S.cards.length} / 10</td></tr>
+        <tr><td>最终余额</td><td>${eur(S.geld)}</td></tr>
+      </table>
+      <p>「时间可以买，资格不能补」的另一面是——<b>买不起时间的人，先出局</b>。</p>` },
+    gameoverChoice()
+  ]
+});
+
+/* ---------- 知识导图（汇报主体） ---------- */
+function mindmapHTML(){
+  const BR = [
+    { side:0, c:'#E8B84B', ink:'#1D2B23', t:'发展历史 · GESCHICHTE', L:[
+      ['1810 · 柏林大学（洪堡理念）','教研合一 · 学术自由'],
+      ['二战后联邦制重建','高校立法权归 16 个州'],
+      ['1999 · 博洛尼亚进程','欧洲统一学士—硕士学制'],
+      ['2002 起 Ba./Ma. 取代 Diplom','引入 ECTS 学分系统'],
+      ['免学费传统：1970s 起普及','巴符州 2017 起收非欧盟学费']]},
+    { side:0, c:'#2C4A72', ink:'#F4EFD9', t:'高校类型 · TYPEN', L:[
+      ['Universität（综合大学）','研究型 · 理论导向 · 可读博'],
+      ['HAW / FH（应用科学大学）','实践导向 · 学期含实习'],
+      ['艺术与音乐学院','须作品集 / 入学考试'],
+      ['DHBW 双元制（巴符州）','企业与高校交替培养'],
+      ['无官方排名','「精英大学」仅是科研资助标签']]},
+    { side:0, c:'#5F8C5A', ink:'#F4EFD9', t:'入学与语言 · ZUGANG', L:[
+      ['「宽进」：多数专业无入学考','以中学毕业证 / 学历互认筛选'],
+      ['国际生：APS 审核 + uni-assist','中国学历须先过 APS 认证'],
+      ['语言关：DSH / TestDaF / 歌德','DSH 一年仅 2 个考期'],
+      ['可发「条件录取」','先到语言中心报到过语言关'],
+      ['HAW 部分专业例外','须先提交实习 / 预实习证明']]},
+    { side:1, c:'#C0503E', ink:'#F4EFD9', t:'学制与考试 · PRÜFUNGEN', L:[
+      ['标准学制 Regelstudienzeit','本科 6 学期 · 硕士 4 学期'],
+      ['修满 ECTS 才能毕业','本科 180 · 硕士 120'],
+      ['Prüfungsordnung（考试条例）','每校自定 · 具法律效力'],
+      ['一门课共三次尝试机会','补考通常须自行报名'],
+      ['第三次失败＝全国同专业失格','endgültig nicht bestanden']]},
+    { side:1, c:'#4E9A92', ink:'#F4EFD9', t:'弹性与成本 · FLEXIBEL', L:[
+      ['休学 Urlaubssemester','须书面申请 · 官方登记'],
+      ['延期 / Härtefall 须自己举证','病假条限期限内提交'],
+      ['学期费 70–430 € · 巴符州 1.500 €','TUM 2024/25 起可自定学费'],
+      ['超标准学制 +4/+6 学期','部分州加收长学期学费'],
+      ['每学期须完成 Rückmeldung','不缴费＝注销学籍']]},
+    { side:1, c:'#8A5040', ink:'#F4EFD9', t:'数据与现实 · DATEN', L:[
+      ['本科辍学率：本国 28% / 外国 41%','差距在条款 · 语言 · 重来成本'],
+      ['硕士按时毕业仅 29,8%','41,8% 超 1–2 学期'],
+      ['约 1/4 学生至少多读一年','「延毕」是常态，不是事故'],
+      ['学生宿舍仅覆盖约 10%','排队 2–3 学期是常态'],
+      ['结论：筛选发生在「过程」','风险由个人承担 · 时间可购买']]}
+  ];
+  const W = 940, H = 700, cx = W / 2;
+  const slotY = [14, 240, 466];
+  let out = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:PingFang SC,Microsoft YaHei,sans-serif">`;
+  let links = '', nodes = '';
+  BR.forEach((b, i) => {
+    const y = slotY[i % 3];
+    const bx = b.side ? 624 : 16;
+    const bw = 176;
+    const ty = y + 12;
+    links += b.side
+      ? `<path d="M ${cx + 112} ${H/2} Q ${bx - 70} ${H/2} ${bx} ${ty}" stroke="${b.c}" stroke-width="3" fill="none" opacity=".8"/>`
+      : `<path d="M ${cx - 112} ${H/2} Q ${bx + bw + 70} ${H/2} ${bx + bw} ${ty}" stroke="${b.c}" stroke-width="3" fill="none" opacity=".8"/>`;
+    nodes += `<rect x="${bx}" y="${y}" width="${bw}" height="24" fill="${b.c}"/>` +
+      `<text x="${bx + 10}" y="${y + 16}" font-size="11.5" font-weight="700" fill="${b.ink}">${b.t}</text>`;
+    let ly = y + 38;
+    b.L.forEach(leaf => {
+      nodes += `<circle cx="${bx + 8}" cy="${ly + 3}" r="3" fill="${b.c}"/>`;
+      nodes += `<text x="${bx + 18}" y="${ly + 7}" font-size="11.5" fill="#DCE8DC">${leaf[0]}</text>`;
+      if (leaf[1]) nodes += `<text x="${bx + 18}" y="${ly + 22}" font-size="10.5" fill="#9FB4A8">${leaf[1]}</text>`;
+      ly += leaf[1] ? 36 : 20;
+    });
+  });
+  out += links + nodes;
+  out += `<rect x="${cx - 112}" y="${H/2 - 40}" width="224" height="80" fill="#26261F" stroke="#E8B84B" stroke-width="3"/>` +
+    `<text x="${cx}" y="${H/2 - 12}" text-anchor="middle" font-size="17" font-weight="700" fill="#F4EFD9">德国留学教育体制</text>` +
+    `<text x="${cx}" y="${H/2 + 8}" text-anchor="middle" font-size="11" fill="#79C4BC">刚性在资格 · 弹性在时间</text>` +
+    `<text x="${cx}" y="${H/2 + 26}" text-anchor="middle" font-size="9" fill="#8FA6A0" letter-spacing="2">DREI VERSUCHE · 知识导图</text>`;
+  out += `<text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="9.5" fill="#7E938A">分支内容均可回溯：DZHW · Destatis · CHE · dsh.de · 各州高校法 · 各校 Prüfungsordnung（详见事实包）</text></svg>`;
+  return `<div id="mapwrap">${out}</div>`;
+}
+SCENES.map = () => ({
+  bg: BG.gate, ch: 'DENKKARTE',
+  script: [
+    { t:'say', who:'book', text:'德国留学教育体制 · 一张图。发展历史、高校类型、入学与语言、学制与考试、弹性与成本、数据与现实——汇报需要的全景都在这里（下方已展开）。' },
+    { t:'panel', flow:true, title:'DENKKARTE · 德国留学教育体制 <span>思 维 导 图</span>', html: mindmapHTML() }
+  ]
+});
+
+/* ---------- 结局 ---------- */
+function makeEnd(kind){
+  const semTotal = S.sem;
+  const spent = 38200 - S.geld;
+  const stamp = { A: 'BESTANDEN', B: 'MIT VERLÄNGERUNG', C: 'ENDGÜLTIG NICHT BESTANDEN' }[kind];
+  const delayRow = S.delay ? `<tr><td>行政改题造成的答辩顺延</td><td>${S.delay} Monate</td></tr>` : '';
+  const script = [];
+
+  if (kind === 'A'){
+    script.push(
+      { t:'panel', title:'ZEUGNIS · 毕业证书 <span>B.Sc. Maschinenbau</span>', html: `
+        <div class="pstamp" style="color:#4E9A92">BESTANDEN</div>
+        <p style="font-family:var(--mono);font-size:24px;color:#FFF">Note 2,7</p>
+        <p>总用时 ${semTotal} 学期 · 标准年限 6 学期 · 超期 ${semTotal - 6} 学期。</p>
+        ${S.delay ? `<p><b>＋ ${S.delay} Monate：</b>只差一个词。三本塑封的论文因为封面和系统里差了一个词，全部重印。没有人做错什么大事——只是系统里的一行字，需要一张表、三个签字和 ${S.delay} 个月才能改回来。</p>` : ''}
+        <table class="ledger">
+          <tr><td>实际学期数</td><td>${semTotal}</td></tr>
+          <tr><td>用掉的考试尝试</td><td>3 / 3</td></tr>
+          ${delayRow}
+          <tr><td>总支出（含学费与生活）</td><td>${eur(spent)}</td></tr>
+          <tr><td>超期带来的额外成本</td><td>€ ${((semTotal-6)*4800).toLocaleString('de-DE')}</td></tr>
+        </table>
+        <p>毕业典礼在一个下雨的周五，学院发了面包和廉价起泡酒。你忽然想起刚入学那个把 Prüfungsordnung 读完的晚上——那是你唯一一次，<b>在制度开口之前先读了说明书</b>。</p>
+        <p>你没有被「难度」淘汰。你被「时间」筛了一遍，然后被「钱」捞了回来。</p>` },
+      { t:'card', id:'daten' }
+    );
+  } else if (kind === 'B'){
+    script.push(
+      { t:'panel', title:'ZEUGNIS · 毕业证书 <span>B.Sc. Maschinenbau</span>', html: `
+        <div class="pstamp" style="color:#E8B84B">MIT VERLÄNGERUNG</div>
+        <p style="font-family:var(--mono);font-size:24px;color:#FFF">Note 3,3</p>
+        <p>总用时 ${semTotal} 学期 · 超期 ${semTotal - 6} 学期 · 其中休学 ${S.leave} 学期。${S.delay ? `改题再拖 ${S.delay} 个月。` : ''}</p>
+        <table class="ledger">
+          <tr><td>实际学期数</td><td>${semTotal}</td></tr>
+          <tr><td>休学学期</td><td>${S.leave}</td></tr>
+          ${delayRow}
+          <tr><td>总支出（含学费与生活）</td><td>${eur(spent)}</td></tr>
+        </table>
+        <p>你比标准年限多用了 ${semTotal - 6} 个学期。这几年你换了两次住处，做了一年半 Werkstudent，学会在考试和账单之间安排睡眠。</p>
+        <p>没有人问你为什么晚了两年。在德国，这个问题不太有人问——「什么时候毕业」不是这里的社会时钟。</p>
+        <p>但你也清楚：<em>能买时间的人，本来就不是被筛掉的那批人</em>。</p>` },
+      { t:'card', id:'daten' }
+    );
+  } else {
+    script.push(
+      { t:'panel', title:'BESCHEID · 行政裁定 <span>Drittversuch</span>', html: `
+        <div class="pstamp">ENDGÜLTIG NICHT BESTANDEN</div>
+        <p style="font-family:var(--mono);font-size:12px;color:#AFC5BC">Die Modulprüfung wurde endgültig nicht bestanden. Der Prüfungsanspruch für den Studiengang Maschinenbau erlischt.</p>
+        <p>这不是一张成绩单，是一份行政裁定：你不能再在这所大学读这个专业，也不能在德国任何一所大学读这个专业。</p>
+        <p>你有 30 天提出异议（Widerspruch）——但只能针对<em>程序</em>，不能针对「我不服这个分数」。</p>
+        <table class="ledger">
+          <tr><td>校内转专业（Fachwechsel）</td><td>学分部分认定</td></tr>
+          <tr><td>双元制职业培训（Ausbildung）</td><td>3 年，有工资</td></tr>
+          <tr><td>回国，重新开始</td><td>时间成本最高</td></tr>
+        </table>
+        <p>你打开手机，妈妈的对话框停在很久以前那句「钱够不够」。</p>` },
+      { t:'card', id:'daten' },
+      { t:'say', who:'sys', text:'DZHW 估算：德国本科生辍学率 28%，外国本科生 41%。13 个百分点的差距，不在智力，在条款、语言与一次重来的成本。' }
+    );
+  }
+
+  script.push({ t:'jump', to: 'debrief' + S.ending });
+  return { bg: BG.gate, ch: 'KAP. 8 · ZEUGNIS', script };
+}
+SCENES.endA = () => makeEnd('A');
+SCENES.endB = () => makeEnd('B');
+SCENES.endC = () => makeEnd('C');
+
+/* ---------- 复盘 ---------- */
+function makeDebrief(kind){
+  const label = { A: '你通过了，并在标准框架内消化了代价。',
+                  B: '你通过了，但代价被推迟到了时间里。',
+                  C: '你被一个不可逆的节点拦下了。' }[kind];
+  const cardsHtml = Object.keys(CARDS).map(id => {
+    const c = CARDS[id], got = S.cards.includes(id);
+    return got
+      ? `<div class="kcard"><span class="kn">${c.n} · 已收录</span><span class="kt">${c.t}</span><span class="kx">${c.x}</span><span class="src">${c.src}</span></div>`
+      : `<div class="kcard miss"><span class="kn">${c.n} · 未收录</span><span class="kt">${c.t} · ???</span></div>`;
+  }).join('');
+  const script = [
+    { t:'say', who:'sys', text:'复盘 · Auswertung——这一次，制度是怎么运作的。（长内容已展开在下方，滚动阅读）' },
+    { t:'panel', flow:true, title:'AUSWERTUNG · 复盘 <span>制 度 手 册</span>', html: `
+      <p>${label}</p>
+      <table class="ledger">
+        <tr><td>专业学期</td><td>${S.sem}</td></tr>
+        <tr><td>学分</td><td>${S.ects} ECTS</td></tr>
+        <tr><td>用掉的尝试</td><td>${S.att} / 3</td></tr>
+        <tr><td>信息掌握（Wissen）</td><td>${['低','低','中','高','很高'][Math.min(S.wissen,4)]}</td></tr>
+        <tr><td>语言证明</td><td>${['offen','DSH-2','DSH-2+'][S.sprache]}${S.extraSem ? ' · 晚入学 1 学期' : ''}</td></tr>
+        <tr><td>住址登记（Anmeldung）</td><td>${S.adresse ? 'erledigt' : 'offen · 送达风险'}</td></tr>
+        ${S.delay ? `<tr><td>行政改题造成的延期</td><td>${S.delay} Monate</td></tr>` : ''}
+        <tr><td>余额</td><td>${eur(S.geld)}</td></tr>
+      </table>
+      <p style="margin:10px 0 4px"><b>你的关键决定</b></p>
+      <ul class="findings">${S.log.length ? S.log.map(l => `<li>${l}</li>`).join('') : '<li>你没有留下记录。</li>'}</ul>
+      <p style="margin:12px 0 4px"><b>五条制度发现</b></p>
+      <ul class="findings">
+        <li>刚性在「资格」上：一门必修课的第三次失败，是<span class="hi">不可逆、全国联网</span>的。不给你补考、不给重修、不给解释。</li>
+        <li>弹性在「时间」上：休学、非全日制、延期、困难申请——都可以，但<span class="hi">每一件都要自己写申请、自己举证、自己付钱</span>。</li>
+        <li>门槛不止在课堂：语言考试一年两次窗口；大学不包住宿。<span class="hi">生活条件被外置给市场</span>，却以住址、送达、精力的形式计入学业。</li>
+        <li>连行政错误也由学生承担：题目登记后逐字生效，一个抄错的词要一张表、三个签字、一次委员会。<span class="hi">不是你的错，也要用你的时间去改。</span></li>
+        <li>合起来：筛选从「入学」移到「过程」，风险从学校转给个人。<b>时间可以买，资格不能补。</b></li>
+      </ul>
+      <p style="margin:12px 0 4px"><b>知识卡收集 ${S.cards.length} / 10</b></p>
+      <div class="cardlist">${cardsHtml}</div>
+      <details>
+        <summary>FAKTENBLATT · 制度事实包（可直接用于汇报）</summary>
+        <ul class="findings">
+          <li>本科辍学率：德国学生 28%，外国学生 41%；硕士 21% 与 28%。<span class="src">DZHW 估算，至 2022 夏季学期</span></li>
+          <li>硕士按时毕业比例：2012 年 39,3% → 2023 年 29,8%；超 1–2 学期 41,8%；超 3 学期以上 28,4%。<span class="src">Destatis，2023 考试年度</span></li>
+          <li>约四分之一学生至少多读一年；官方非全日制比例仅 7,6%。<span class="src">CHE 2024</span></li>
+          <li>三次尝试规则：一次首考 + 两次补考；论文通常只有 1–2 次机会。<span class="src">各校 Prüfungsordnung</span></li>
+          <li>Freiversuch：首次失败不计次数，但限定「标准年限内 + 规定考期 + 指定模块」。<span class="src">Uni des Saarlandes §17(4) 等</span></li>
+          <li>「最终不及格」的效力：同专业全德受限，相近专业视各州法律而定。<span class="src">各州高校法</span></li>
+          <li>学费：巴登-符腾堡州非欧盟 1.500 €/学期；TUM 2024/25 起本科 2.000–3.000 €、硕士 4.000–6.000 €；其余仅学期费。<span class="src">州高教法、各校收费页，2026-10 核对</span></li>
+          <li>长学期学费：下萨克森、萨克森、图林根等约 500 €/学期，起征点为标准年限 +4/+6 学期。<span class="src">各州高校法，2026</span></li>
+          <li>DSH：一年 2 次考期；报名要 C1；笔试口试都须通过；DSH-2 ≥ 67%；约 150 €。重考次数由各校自定。<span class="src">dsh.de；Uni Siegen §9</span></li>
+          <li>宿舍：约 19,6 万个床位覆盖约 10% 学生；2026-09 约 10,5 万人排队；宿舍约 330 €/月，私人合租约 510 €/月。<span class="src">Deutsches Studierendenwerk（媒体转引）</span></li>
+          <li>论文题目：登记后逐字生效；改题须书面申请 + 委员会批准，通常一次、限 4 周内、两位评审签字。<span class="src">HTW Berlin；RWTH Aachen；Uni Duisburg-Essen §21(3)(6)</span></li>
+        </ul>
+      </details>
+      <p style="border:2px solid var(--gold);padding:10px 12px;margin-top:14px;font-size:13px;line-height:1.8">
+        <b style="color:var(--gold)">结论句 · 可直接用作汇报收尾：</b><br>
+        <b>「毕业难」不是难度问题，是容错结构问题。</b>德国把质量控制压缩进少数不可逆的硬节点，把进度控制摊开成可申请、可购买的软时间；语言、住处、乃至一张填错的表，都被算进这条时间线。真正决定谁被筛掉的，不是智力，而是<b>谁读得懂条款、谁付得起一次重来</b>。
+      </p>
+      <p style="margin:16px 0 4px"><b style="color:var(--gold)">知识导图 · 德国留学教育体制（汇报主体）</b></p>
+      ${mindmapHTML()}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+        <button class="pxbtn gold" onclick="reset()">NOCHMAL · 再走一遍这条路</button>
+        <button class="pxbtn" onclick="go('map')">DENKKARTE · 单独查看知识导图</button>
+        <button class="pxbtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ 回到游戏画面</button>
+      </div>` }
+  ];
+  return { bg: BG.gate, ch: 'AUSWERTUNG', script };
+}
+SCENES.debriefA = () => makeDebrief('A');
+SCENES.debriefB = () => makeDebrief('B');
+SCENES.debriefC = () => makeDebrief('C');
+
+/* =========================================================
+   启动 / 重置 / 跳转
+   ========================================================= */
+function reset(){
+  Object.assign(S, {
+    sem: 1, ects: 0, kraft: 100, geld: 12000, wissen: 0, att: 0,
+    prep: 32, log: [], crisisPicks: [], toldMom: false, leave: 0,
+    sprache: 0, adresse: 0, extraSem: 0, delay: 0, pings: 0,
+    thesisFixed: false, ending: 'A', cards: []
+  });
+  hud();
+  current = 'start';
+  SC = SCENES.start();
+  idx = 0;
+  closePanel();
+  clearFlow();
+  clearArm();
+  cleanupStage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  drawBG(SC);
+  $('#start').classList.add('on');
+  const whoEl = $('#who'), port = $('#portbox');
+  whoEl.textContent = '角色设定 · ROLLE';
+  whoEl.className = 'on';
+  port.innerHTML = SPRITES.you;
+  port.style.visibility = 'visible';
+  $('#text').innerHTML = '李晓，22 岁，西安人。机械工程本科一年级。<br>你有 <em>6 个标准学期</em>、一份 24 页的 Prüfungsordnung（考试条例），和一个从不解释的考试办公室。<br>按 <b>START</b>，走进 WS 2025/26 冬季学期。';
+  $('#choices').innerHTML = '';
+  $('#cont').classList.remove('on');
+}
+
+$('#startbtn').addEventListener('click', () => {
+  $('#start').classList.remove('on');
+  transit('KAP. 1 · SPRACHE', 'sprache');
+});
+
+/* 舞台点击也推进对白 */
+$('#stage').addEventListener('click', (e) => {
+  if ($('#panelwrap').classList.contains('on')) return;
+  if ($('#transit').classList.contains('on')) return;
+  if ($('#start').classList.contains('on')) return;
+  advanceClick();
+});
+
+/* 汇报直达：drei-versuche.html?scene=thesis
+   可用：start / sprache / mail / wohnung / room / po / exam1 / result1 / crisis /
+         dritt / thesis / endA|B|C / debriefA|B|C / gameoverK / gameoverG / map */
+const qs = new URLSearchParams(location.search).get('scene');
+if (qs === 'start' || !qs){
+  reset();
+} else if (SCENES[qs]){
+  current = qs;
+  SC = SCENES[qs]();
+  idx = (qs === 'map') ? 1 : 0;   /* 直达导图时跳过对白，直接展开 */
+  drawBG(SC);
+  step();
+} else {
+  reset();
+}
+</script>
+</body>
+</html>
